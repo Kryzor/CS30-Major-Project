@@ -2,7 +2,7 @@
 
 A continuation of my grid based assignment
 
-Building a endless pacman that infinitely generates the a maze
+Building a endless game of pacman that infinitely generates the maze
 
 # Major Project Proposal
 
@@ -20,3 +20,8 @@ Building a endless pacman that infinitely generates the a maze
 - Dramatic effects for eating ghosts or being killed by ghosts
     - Like a particle explosion and a camera shake when eating a ghost
     - Sort of the same thing for when pacman gets killed
+
+- Certain gamemodes
+    - Like a scary mode which adds limited lighting
+    - Extra ghosts
+    - Maybe even a custom gamemode where the player gets to customize the game
