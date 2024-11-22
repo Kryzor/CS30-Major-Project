@@ -5,10 +5,10 @@
 let mazeGrid;
 let cellSize;
 
-const MAZE_SIZE = 100;
+const MAZE_SIZE = 50;
 
 //visual grid size for the amount of blocks will be seen on screen
-let gridSize = 20;
+let gridSize = 50;
 
 //Display grid size variables
 let displayGridX;
@@ -88,7 +88,6 @@ function setup() {
   mazeGrid = generateRandomGrid(MAZE_SIZE, MAZE_SIZE);
 
   imageMode(CENTER);
-  rectMode(CENTER);
 
   noSmooth();
   background(0);
@@ -102,7 +101,7 @@ function windowResized(){
 
 function draw() {
   cellSize = height/gridSize;
-
+  
   //makes the speed go the same speed for the size of the grid, if it was a static number
   //it would go super fast on a screen fitting a large amount of squares
   //or super slow on a screen fitting a little amount of squares
@@ -112,7 +111,7 @@ function draw() {
   displayGridY = height/cellSize;
   
   screenController();
-
+  
 }
 
 //Controls which screen is allowed to be visible
@@ -134,6 +133,8 @@ function displayGameScreen(){
 
 //Displays the main screen
 function displayMainScreen(){
+  fill(0,0,255);
+  rect(width/2,height/2, 50, 50);
   background(0);
 }
 
@@ -149,9 +150,9 @@ function movePlayer() {
 
   //directional points
   let playerUpperGridY = Math.floor(thePlayer.y/cellSize-0.45); //up
-  let playerLowerGridY = Math.floor(thePlayer.y/cellSize); //down
+  let playerLowerGridY = Math.floor(thePlayer.y/cellSize+0.45); //down
   let playerLeftGridX = Math.floor(thePlayer.x/cellSize-0.45); //left
-  let playerRightGridY = Math.floor(thePlayer.x/cellSize); //right
+  let playerRightGridY = Math.floor(thePlayer.x/cellSize+0.45); //right
   
   //Checks states to move the player depending on that state
   if (PacManMoveState === 1){ //up
@@ -201,11 +202,17 @@ function inputsForGame(){
   if (keyIsDown(39) === true || keyIsDown(68) === true){ //right
     PacManMoveState = 4;
   }
-  if (keyIsDown(189) === true){ // plus
-    gridSize += 0.1;
+}
+
+function mouseWheel(event){
+  if (event.delta < 0){
+    gridSize -= 5;
   }
-  if (keyIsDown(187) === true){ // minus
-    gridSize -= 0.1;
+  else {
+    gridSize += 5;
+  }
+  if (gridSize > MAZE_SIZE){
+    gridSize = MAZE_SIZE;
   }
 }
 
@@ -230,11 +237,12 @@ function displayPlayer(){
 
 //Generates the grid
 function generateRandomGrid(cols, rows) {
-  const grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
+  const maze = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
 
   //carves the path
   function carvePath(x,y){
     const directions = [
+      {dx: 0, dy: 0},//up
       {dx: 0, dy: -1},//up
       {dx: 0, dy: 1},//down
       {dx: 1, dy: 0},//right
@@ -247,29 +255,32 @@ function generateRandomGrid(cols, rows) {
     directions.sort(() => Math.random() - 0.5);
 
     directions.forEach(({dx,dy}) => {
+
       const nx = x + dx * 2;
       const ny = y + dy * 2;
-      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && grid[ny][nx] === IMPASSIBLE){
-        grid[y + dy][x + dx] = OPEN_TILE;
-        grid[ny][nx] = OPEN_TILE;
+
+      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && maze[ny][nx] === IMPASSIBLE){
+        maze[y + dy][x + dx] = OPEN_TILE;
+        maze[ny][nx] = OPEN_TILE;
         carvePath(nx, ny);
       }
     });
   }
 
 
-  carvePath(1,1);
+  carvePath(0,0);
 
-  return grid;
+  return maze;
 }
 
 //Displays the grid
 function displayGrid() {
+  translate(width/2, height/2);
 
   stroke("blue");
   //Checks each tile
-  for (let y = 0; y < displayGridX; y++) {
-    for (let x = 0; x < displayGridY; x++) {
+  for (let y = 0; y < displayGridY; y++) {
+    for (let x = 0; x < displayGridX; x++) {
 
       //gives the squares colour appropiate to its state
       //no open tile colour to optimize the performance
@@ -279,4 +290,13 @@ function displayGrid() {
       }
     }
   }
+}
+
+class Chunks {
+
+  constructor(x, y){
+    grid.x = x;
+    grid.y = y;
+  }
+
 }
