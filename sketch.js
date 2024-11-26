@@ -8,11 +8,14 @@ let cellSize;
 const MAZE_SIZE = 50;
 
 //visual grid size for the amount of blocks will be seen on screen
-let gridSize = 50;
+let gridSize = 25;
 
 //Display grid size variables
 let displayGridX;
 let displayGridY;
+
+//freeze variable for when the game pauses or when the player kills a ghost
+let freezeGame = 0;
 
 //grid states
 const OPEN_TILE = 0;
@@ -53,6 +56,17 @@ let upPacManSprite;
 //the state for the screen
 let screenState = 1;
 
+let gridPositionX = 0;
+let gridPositionY = 0;
+
+class Chunks {
+
+  constructor(x, y){
+    grid.x = x;
+    grid.y = y;
+  }
+}
+
 function preload(){
   //loads the sprites
   defaultPacManSprite = loadImage("images/pacman/pacman-default.png"); 
@@ -82,8 +96,11 @@ function setup() {
   
   //creates the spawn position for pac man
   thePlayer.spawnBox = Math.round(gridSize/2);
-  thePlayer.x = thePlayer.spawnBox * cellSize+cellSize/2;
-  thePlayer.y = thePlayer.spawnBox * cellSize+cellSize/2;
+  thePlayer.x = thePlayer.spawnBox*2;
+  thePlayer.y = thePlayer.spawnBox*2;
+
+  gridPositionX = width/2-50;
+  gridPositionY = height/2-50;
 
   mazeGrid = generateRandomGrid(MAZE_SIZE, MAZE_SIZE);
 
@@ -129,6 +146,7 @@ function displayGameScreen(){
   background(0);
   displayGrid();
   createPlayer();
+  touchInputs();
 }
 
 //Displays the main screen
@@ -242,7 +260,6 @@ function generateRandomGrid(cols, rows) {
   //carves the path
   function carvePath(x,y){
     const directions = [
-      {dx: 0, dy: 0},//up
       {dx: 0, dy: -1},//up
       {dx: 0, dy: 1},//down
       {dx: 1, dy: 0},//right
@@ -275,9 +292,11 @@ function generateRandomGrid(cols, rows) {
 
 //Displays the grid
 function displayGrid() {
-  translate(width/2, height/2);
+  //translate(gridPositionX, gridPositionY);
 
+  //makes the IMPASSIBLE boxes have the look of being connected to each other
   stroke("blue");
+
   //Checks each tile
   for (let y = 0; y < displayGridY; y++) {
     for (let x = 0; x < displayGridX; x++) {
@@ -292,11 +311,8 @@ function displayGrid() {
   }
 }
 
-class Chunks {
-
-  constructor(x, y){
-    grid.x = x;
-    grid.y = y;
-  }
-
+function touchInputs(){
+  fill(255,255,255);
+  stroke(0);
+  square(75, height-75, 50, 10);
 }

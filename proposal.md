@@ -8,14 +8,14 @@ Building a endless game of pacman that infinitely generates the maze
 
 ## Need to have
 - Actual infinite generation
-- A camera that follows the player
-- ghosts that use AI to move to the player
+- Ghosts that use AI to move to the player
 - Pellets and bigger pellets for eating ghosts
 - Animated sprites for pacman and ghosts
 - Score counter
 - Main menu with settings
 
 ## Nice to have
+- A camera that follows the player
 - Skins for the player and possibly ghosts
 - Dramatic effects for eating ghosts or being killed by ghosts
     - Like a particle explosion and a camera shake when eating a ghost
