@@ -2,10 +2,81 @@
 // Katos Booth
 // November 21st 2024
 
-let mazeGrid;
+class Maze{
+  constructor(cols,rows){
+    this.cols = cols;
+    this.rows = rows;
+    this.maze = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
+    this.carvePath(0, 0);
+  }
+
+  carvePath(x,y){
+    const directions = [
+      {dx: 0, dy: -1},//up
+      {dx: 0, dy: 1},//down
+      {dx: 1, dy: 0},//right
+      {dx: -1, dy: 0},//left
+    ];
+
+    //change the random number to change how often lines will be made
+    //decrease the value for more vertical lines
+    //increase the value for more horizontal lines
+    directions.sort(() => Math.random() - 0.5);
+
+    directions.forEach(({dx,dy}) => {
+
+      const nx = x + dx * 2;
+      const ny = y + dy * 2;
+
+      if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.maze[ny][nx] === IMPASSIBLE){
+        this.maze[y + dy][x + dx] = OPEN_TILE;
+        this.maze[ny][nx] = OPEN_TILE;
+        this.carvePath(nx, ny);
+      }
+    });
+  }
+  
+  expand(direction){
+    if (direction === "right"){
+      this.cols += MAZE_SIZE;
+      // for (let cols of this.maze){
+      //   this.carvePath(this.rows - MAZE_SIZE, y);
+      // }
+      for (let y = 0; y < this.cols; y++){
+        this.carvePath(this.rows - MAZE_SIZE, y);
+      }
+    }
+    if (direction === "down"){
+      this.rows += MAZE_SIZE;
+      for (let col of this.maze){
+        col.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
+      }
+      for (let x = 0; x < this.cols; x++){
+        this.carvePath(x, this.rows - MAZE_SIZE);
+      }
+    }
+  }
+  
+  display(){
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        
+        //gives the squares colour appropiate to its state
+        //no open tile colour to optimize the performance
+        if (this.maze[y][x] === IMPASSIBLE) {
+          stroke("blue");
+          fill("blue");
+          square(x * cellSize, y * cellSize, cellSize);
+        }
+      }
+    }
+  }
+}
+
+let maze;
 let cellSize;
 
-const MAZE_SIZE = 50;
+const MAZE_SIZE = 25;
 
 //visual grid size for the amount of blocks will be seen on screen
 let gridSize = 25;
@@ -59,14 +130,6 @@ let screenState = 1;
 let gridPositionX = 0;
 let gridPositionY = 0;
 
-class Chunks {
-
-  constructor(x, y){
-    grid.x = x;
-    grid.y = y;
-  }
-}
-
 function preload(){
   //loads the sprites
   defaultPacManSprite = loadImage("images/pacman/pacman-default.png"); 
@@ -102,7 +165,7 @@ function setup() {
   gridPositionX = width/2-50;
   gridPositionY = height/2-50;
 
-  mazeGrid = generateRandomGrid(MAZE_SIZE, MAZE_SIZE);
+  maze = new Maze(MAZE_SIZE, MAZE_SIZE);
 
   imageMode(CENTER);
 
@@ -122,12 +185,13 @@ function draw() {
   //makes the speed go the same speed for the size of the grid, if it was a static number
   //it would go super fast on a screen fitting a large amount of squares
   //or super slow on a screen fitting a little amount of squares
-  thePlayer.speed = cellSize*0.1;
+  thePlayer.speed = cellSize*0.5;
 
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
   
   screenController();
+  checkMazeExpansion();
   
 }
 
@@ -144,9 +208,9 @@ function screenController(){
 //Displays the game screen
 function displayGameScreen(){
   background(0);
-  displayGrid();
+  maze.display();
   createPlayer();
-  touchInputs();
+  //touchInputs();
 }
 
 //Displays the main screen
@@ -154,6 +218,17 @@ function displayMainScreen(){
   fill(0,0,255);
   rect(width/2,height/2, 50, 50);
   background(0);
+}
+
+function checkMazeExpansion(){
+  const threshold = MAZE_SIZE * cellSize * 0;
+
+  if (thePlayer.x >  maze.cols * cellSize - threshold){
+    maze.expand("right");
+  }
+  if (thePlayer.y >  maze.rows * cellSize - threshold){
+    maze.expand("down");
+  }
 }
 
 function createPlayer(){
@@ -186,7 +261,7 @@ function movePlayer() {
     thePlayer.x += thePlayer.speed;
   }
   
-  playerGridCollision(playerGridX, playerGridY, playerUpperGridY, playerLowerGridY,  playerLeftGridX, playerRightGridY);
+  //playerGridCollision(playerGridX, playerGridY, playerUpperGridY, playerLowerGridY,  playerLeftGridX, playerRightGridY);
   inputsForGame();
 }
 
@@ -229,9 +304,9 @@ function mouseWheel(event){
   else {
     gridSize += 5;
   }
-  if (gridSize > MAZE_SIZE){
-    gridSize = MAZE_SIZE;
-  }
+  // if (gridSize > MAZE_SIZE){
+  //   gridSize = MAZE_SIZE;
+  // }
 }
 
 //Displays the player
@@ -250,64 +325,6 @@ function displayPlayer(){
   }
   if (PacManMoveState === 4){
     image(rightPacManSprite, thePlayer.x, thePlayer.y, cellSize, cellSize);
-  }
-}
-
-//Generates the grid
-function generateRandomGrid(cols, rows) {
-  const maze = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
-
-  //carves the path
-  function carvePath(x,y){
-    const directions = [
-      {dx: 0, dy: -1},//up
-      {dx: 0, dy: 1},//down
-      {dx: 1, dy: 0},//right
-      {dx: -1, dy: 0},//left
-    ];
-
-    //change the random number to change how often lines will be made
-    //decrease the value for more vertical lines
-    //increase the value for more horizontal lines
-    directions.sort(() => Math.random() - 0.5);
-
-    directions.forEach(({dx,dy}) => {
-
-      const nx = x + dx * 2;
-      const ny = y + dy * 2;
-
-      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && maze[ny][nx] === IMPASSIBLE){
-        maze[y + dy][x + dx] = OPEN_TILE;
-        maze[ny][nx] = OPEN_TILE;
-        carvePath(nx, ny);
-      }
-    });
-  }
-
-
-  carvePath(0,0);
-
-  return maze;
-}
-
-//Displays the grid
-function displayGrid() {
-  //translate(gridPositionX, gridPositionY);
-
-  //makes the IMPASSIBLE boxes have the look of being connected to each other
-  stroke("blue");
-
-  //Checks each tile
-  for (let y = 0; y < displayGridY; y++) {
-    for (let x = 0; x < displayGridX; x++) {
-
-      //gives the squares colour appropiate to its state
-      //no open tile colour to optimize the performance
-      if (mazeGrid[y][x] === IMPASSIBLE) {
-        fill("blue");
-        square(x * cellSize, y * cellSize, cellSize);
-      }
-    }
   }
 }
 
