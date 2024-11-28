@@ -24,10 +24,8 @@ class Maze{
     directions.sort(() => Math.random() - 0.5);
 
     directions.forEach(({dx,dy}) => {
-
       const nx = x + dx * 2;
       const ny = y + dy * 2;
-
       if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.maze[ny][nx] === IMPASSIBLE){
         this.maze[y + dy][x + dx] = OPEN_TILE;
         this.maze[ny][nx] = OPEN_TILE;
@@ -39,20 +37,20 @@ class Maze{
   expand(direction){
     if (direction === "right"){
       this.cols += MAZE_SIZE;
-      // for (let cols of this.maze){
-      //   this.carvePath(this.rows - MAZE_SIZE, y);
-      // }
+      for (let cols of this.maze){
+        this.carvePath(this.rows - MAZE_SIZE, y);
+      }
       for (let y = 0; y < this.cols; y++){
         this.carvePath(this.rows - MAZE_SIZE, y);
       }
     }
     if (direction === "down"){
       this.rows += MAZE_SIZE;
-      for (let col of this.maze){
-        col.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
+      for (let row of this.maze){
+        row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
       }
       for (let x = 0; x < this.cols; x++){
-        this.carvePath(x, this.rows - MAZE_SIZE);
+        this.carvePath(x, this.cols - MAZE_SIZE);
       }
     }
   }
@@ -210,7 +208,7 @@ function displayGameScreen(){
   background(0);
   maze.display();
   createPlayer();
-  //touchInputs();
+  touchInputs();
 }
 
 //Displays the main screen
@@ -329,7 +327,52 @@ function displayPlayer(){
 }
 
 function touchInputs(){
-  fill(255,255,255);
-  stroke(0);
+
+  //up
+  if (mouseX > 75 && mouseX <= 125 && mouseY > height-175 && mouseY <= height-125){
+    fill(125);
+    PacManMoveState = 1;
+  }
+  else {
+    fill(255);
+  }
+  square(75, height-175, 50, 10);
+  fill(0);
+  triangle(115, height-135, 85, height-135,100,height-165);
+
+  //down
+  if (mouseX > 75 && mouseX <= 125 && mouseY > height-75 && mouseY <= height-25){
+    fill(125);
+    PacManMoveState = 3;
+  }
+  else {
+    fill(255);
+  }
   square(75, height-75, 50, 10);
+  fill(0);
+  triangle(115, height-65, 85, height-65,100,height-35);
+  
+  //left
+  if (mouseX > 25 && mouseX <= 75 && mouseY > height-125 && mouseY <= height-75){
+    fill(125);
+    PacManMoveState = 2;
+  }
+  else {
+    fill(255);
+  }
+  square(25, height-125, 50, 10);
+  fill(0);
+  triangle(65, height-85, 65, height-115, 35, height-100);
+
+  //right
+  if (mouseX > 125 && mouseX <= 175 && mouseY > height-125 && mouseY <= height-75){
+    fill(125);
+    PacManMoveState = 4;
+  }
+  else {
+    fill(255);
+  }
+  square(125, height-125, 50, 10);
+  fill(0);
+  triangle(135, height-85, 135, height-115, 165, height-100);
 }
