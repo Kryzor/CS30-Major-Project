@@ -6,7 +6,7 @@ class Maze{
   constructor(cols,rows){
     this.cols = cols;
     this.rows = rows;
-    this.maze = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
+    this.grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
     this.carvePath(0, 0);
   }
 
@@ -26,9 +26,9 @@ class Maze{
     directions.forEach(({dx,dy}) => {
       const nx = x + dx * 2;
       const ny = y + dy * 2;
-      if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.maze[ny][nx] === IMPASSIBLE){
-        this.maze[y + dy][x + dx] = OPEN_TILE;
-        this.maze[ny][nx] = OPEN_TILE;
+      if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.grid[ny][nx] === IMPASSIBLE){
+        this.grid[y + dy][x + dx] = OPEN_TILE;
+        this.grid[ny][nx] = OPEN_TILE;
         this.carvePath(nx, ny);
       }
     });
@@ -37,8 +37,8 @@ class Maze{
   expand(direction){
     if (direction === "right"){
       this.cols += MAZE_SIZE;
-      for (let cols of this.maze){
-        this.carvePath(this.rows - MAZE_SIZE, y);
+      for (let cols of this.grid){
+        this.carvePath(this.x, this.rows - MAZE_SIZE);
       }
       for (let y = 0; y < this.cols; y++){
         this.carvePath(this.rows - MAZE_SIZE, y);
@@ -46,11 +46,8 @@ class Maze{
     }
     if (direction === "down"){
       this.rows += MAZE_SIZE;
-      for (let row of this.maze){
+      for (let row of this.grid){
         row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
-      }
-      for (let x = 0; x < this.cols; x++){
-        this.carvePath(x, this.cols - MAZE_SIZE);
       }
     }
   }
@@ -61,7 +58,7 @@ class Maze{
         
         //gives the squares colour appropiate to its state
         //no open tile colour to optimize the performance
-        if (this.maze[y][x] === IMPASSIBLE) {
+        if (this.grid[y][x] === IMPASSIBLE) {
           stroke("blue");
           fill("blue");
           square(x * cellSize, y * cellSize, cellSize);
