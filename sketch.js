@@ -9,7 +9,6 @@ class Maze{
     this.grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
     this.carvePath(0, 0);
   }
-
   carvePath(x,y){
     const directions = [
       {dx: 0, dy: -1},//up
@@ -22,7 +21,6 @@ class Maze{
     //decrease the value for more vertical lines
     //increase the value for more horizontal lines
     directions.sort(() => Math.random() - 0.5);
-
     directions.forEach(({dx,dy}) => {
       const nx = x + dx * 2;
       const ny = y + dy * 2;
@@ -36,23 +34,27 @@ class Maze{
   
   expand(direction){
     if (direction === "right"){
-      this.cols += MAZE_SIZE;
-      for (let cols of this.grid){
-        this.carvePath(this.x, this.rows - MAZE_SIZE);
+      for (let row of this.grid){
+        row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
       }
-      for (let y = 0; y < this.cols; y++){
-        this.carvePath(this.rows - MAZE_SIZE, y);
+      this.cols += MAZE_SIZE;
+      //Carve the path
+      for (let y = 0; y < this.rows; y++){
+        this.carvePath(this.cols - MAZE_SIZE +1, y);
       }
     }
     if (direction === "down"){
+      const newRows = Array.from({ length: MAZE_SIZE}, () => Array(this.cols).fill(IMPASSIBLE));
+      this.grid.push(...newRows);
       this.rows += MAZE_SIZE;
-      for (let row of this.grid){
-        row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
+      for (let x = 0; x < this.rows; x++){
+        this.carvePath(this.rows, x);
       }
     }
   }
   
   display(){
+    // translate(25,25);
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         
@@ -74,7 +76,7 @@ let cellSize;
 const MAZE_SIZE = 25;
 
 //visual grid size for the amount of blocks will be seen on screen
-let gridSize = 25;
+let gridSize = 50;
 
 //Display grid size variables
 let displayGridX;
@@ -154,8 +156,8 @@ function setup() {
   
   //creates the spawn position for pac man
   thePlayer.spawnBox = Math.round(gridSize/2);
-  thePlayer.x = thePlayer.spawnBox*2;
-  thePlayer.y = thePlayer.spawnBox*2;
+  thePlayer.x = width/2;
+  thePlayer.y = height/2;
 
   gridPositionX = width/2-50;
   gridPositionY = height/2-50;
@@ -216,7 +218,7 @@ function displayMainScreen(){
 }
 
 function checkMazeExpansion(){
-  const threshold = MAZE_SIZE * cellSize * 0;
+  const threshold = MAZE_SIZE * cellSize * 0.2;
 
   if (thePlayer.x >  maze.cols * cellSize - threshold){
     maze.expand("right");
