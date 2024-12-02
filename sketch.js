@@ -2,6 +2,8 @@
 // Katos Booth
 // November 21st 2024
 
+const GRID_SEED = Math.random() - 0.5;
+
 class Maze{
   constructor(cols,rows){
     this.cols = cols;
@@ -17,9 +19,8 @@ class Maze{
       {dx: -1, dy: 0},//left
     ];
 
-    //change the random number to change how often lines will be made
-    //decrease the value for more vertical lines
-    //increase the value for more horizontal lines
+
+
     directions.sort(() => Math.random() - 0.5);
     directions.forEach(({dx,dy}) => {
       const nx = x + dx * 2;
@@ -32,6 +33,7 @@ class Maze{
     });
   }
   
+  //expands the maze
   expand(direction){
     if (direction === "right"){
       for (let row of this.grid){
@@ -116,6 +118,11 @@ let rightPacManSprite4;
 let rightPacManSprite5;
 
 let downPacManSprite;
+let downPacManSprite1;
+let downPacManSprite2;
+let downPacManSprite3;
+let downPacManSprite4;
+let downPacManSprite5;
 
 let leftPacManSprite;
 
@@ -223,6 +230,9 @@ function checkMazeExpansion(){
   if (thePlayer.x >  maze.cols * cellSize - threshold){
     maze.expand("right");
   }
+  if (thePlayer.x < maze.cols * cellSize - threshold){
+    maze.expand("left");
+  }
   if (thePlayer.y >  maze.rows * cellSize - threshold){
     maze.expand("down");
   }
@@ -267,14 +277,17 @@ function playerGridCollision(gridX, gridY, upperGridY, lowerGridY, leftGridX, ri
   if (mazeGrid[upperGridY][gridX] === IMPASSIBLE){ //up
     thePlayer.y = thePlayer.y+cellSize/10;
   }
-  if (mazeGrid[lowerGridY][gridX] === IMPASSIBLE){ //down
+  else if (mazeGrid[lowerGridY][gridX] === IMPASSIBLE){ //down
     thePlayer.y = thePlayer.y-cellSize/10;
   }
-  if (mazeGrid[gridY][leftGridX] === IMPASSIBLE){ //left
+  else if (mazeGrid[gridY][leftGridX] === IMPASSIBLE){ //left
     thePlayer.x = thePlayer.x+cellSize/10;
   }
-  if (mazeGrid[gridY][rightGridX] === IMPASSIBLE){ //right
+  else if (mazeGrid[gridY][rightGridX] === IMPASSIBLE){ //right
     thePlayer.x = thePlayer.x-cellSize/10;
+  }
+  else {
+    thePlayer.x = thePlayer.x;
   }
 }
 
