@@ -2,16 +2,26 @@
 // Katos Booth
 // November 21st 2024
 
-const GRID_SEED = Math.random() - 0.5;
+const GRID_SEED = 12345;
 
 class Maze{
-  constructor(cols,rows){
+  constructor(cols, rows, seed){
     this.cols = cols;
     this.rows = rows;
+    this.seed = seed;
+    this.randomSeed = this.seededRandom(seed);
     this.grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
     this.carvePath(0, 0);
   }
-  carvePath(x,y){
+
+  seededRandom(seed){
+    let value = seed;
+    return ()=>{
+      value = (value * 9301 + 49297) % 233280;
+      return value / 233280;
+    };
+  }
+  carvePath(x, y){
     const directions = [
       {dx: 0, dy: -1},//up
       {dx: 0, dy: 1},//down
@@ -21,7 +31,7 @@ class Maze{
 
 
 
-    directions.sort(() => Math.random() - 0.5);
+    directions.sort(() => this.randomSeed() - 0.5);
     directions.forEach(({dx,dy}) => {
       const nx = x + dx * 2;
       const ny = y + dy * 2;
@@ -42,7 +52,9 @@ class Maze{
       this.cols += MAZE_SIZE;
       //Carve the path
       for (let y = 0; y < this.rows; y++){
-        this.carvePath(this.cols - MAZE_SIZE +1, y);
+        if (y % 2 ===0){
+          this.carvePath(this.cols - MAZE_SIZE +1, y);
+        }
       }
     }
     if (direction === "down"){
@@ -50,22 +62,24 @@ class Maze{
       this.grid.push(...newRows);
       this.rows += MAZE_SIZE;
       for (let x = 0; x < this.rows; x++){
-        this.carvePath(this.rows, x);
+        if (x % 2 === 0){
+          this.carvePath(x, this.rows - MAZE_SIZE);
+        }
       }
     }
   }
   
-  display(){
-    // translate(25,25);
+  display(offsetX, offsetY){
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
-        
-        //gives the squares colour appropiate to its state
-        //no open tile colour to optimize the performance
-        if (this.grid[y][x] === IMPASSIBLE) {
-          stroke("blue");
-          fill("blue");
-          square(x * cellSize, y * cellSize, cellSize);
+        const screenX = x * cellSize - offsetX;
+        const screenY = y * cellSize - offsetY;
+        if (screenX >= 0 && screenX < width && screenY >= 0 && screenY < height){
+          if (this.grid[y][x] === IMPASSIBLE) {
+            stroke("blue");
+            fill("blue");
+            square(screenX, screenY, cellSize);
+          }
         }
       }
     }
@@ -75,10 +89,10 @@ class Maze{
 let maze;
 let cellSize;
 
-const MAZE_SIZE = 25;
+const MAZE_SIZE = 20;
 
 //visual grid size for the amount of blocks will be seen on screen
-let gridSize = 50;
+let gridSize = 25;
 
 //Display grid size variables
 let displayGridX;
@@ -100,6 +114,9 @@ let thePlayer = {
   spawnPositionY: 0,
   spawnBox: 0,
 };
+
+let cameraOffsetX = 0;
+let cameraOffsetY = 0;
 
 //the state for the players movement
 let PacManMoveState = 0;
@@ -162,9 +179,8 @@ function setup() {
   cellSize = height/gridSize;
   
   //creates the spawn position for pac man
-  thePlayer.spawnBox = Math.round(gridSize/2);
-  thePlayer.x = width/2;
-  thePlayer.y = height/2;
+  thePlayer.x = Math.floor(MAZE_SIZE / 2);
+  thePlayer.y = Math.floor(MAZE_SIZE / 2);
 
   gridPositionX = width/2-50;
   gridPositionY = height/2-50;
@@ -185,11 +201,14 @@ function windowResized(){
 
 function draw() {
   cellSize = height/gridSize;
+
+  cameraOffsetX = thePlayer.x * cellSize - width /2;
+  cameraOffsetY = thePlayer.y * cellSize - height /2;
   
   //makes the speed go the same speed for the size of the grid, if it was a static number
   //it would go super fast on a screen fitting a large amount of squares
   //or super slow on a screen fitting a little amount of squares
-  thePlayer.speed = cellSize*0.5;
+  thePlayer.speed = 0.25;
 
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
@@ -212,7 +231,8 @@ function screenController(){
 //Displays the game screen
 function displayGameScreen(){
   background(0);
-  maze.display();
+
+  maze.display(cameraOffsetX, cameraOffsetY);
   createPlayer();
   touchInputs();
 }
@@ -225,15 +245,12 @@ function displayMainScreen(){
 }
 
 function checkMazeExpansion(){
-  const threshold = MAZE_SIZE * cellSize * 0.2;
+  const threshold = 3;
 
-  if (thePlayer.x >  maze.cols * cellSize - threshold){
+  if (thePlayer.x >  maze.cols - threshold){
     maze.expand("right");
   }
-  if (thePlayer.x < maze.cols * cellSize - threshold){
-    maze.expand("left");
-  }
-  if (thePlayer.y >  maze.rows * cellSize - threshold){
+  if (thePlayer.y >  maze.rows - threshold){
     maze.expand("down");
   }
 }
@@ -255,16 +272,17 @@ function movePlayer() {
   let playerRightGridY = Math.floor(thePlayer.x/cellSize+0.45); //right
   
   //Checks states to move the player depending on that state
+  const { x, y } = thePlayer;
   if (PacManMoveState === 1){ //up
     thePlayer.y -= thePlayer.speed;
   }
-  else if (PacManMoveState === 2){ //left
+  if (PacManMoveState === 2){ //left
     thePlayer.x -= thePlayer.speed;
   }
-  else if (PacManMoveState === 3){ //down
+  if (PacManMoveState === 3){ //down
     thePlayer.y += thePlayer.speed;
   }
-  else if (PacManMoveState === 4){ //right
+  if (PacManMoveState === 4){ //right
     thePlayer.x += thePlayer.speed;
   }
   
@@ -314,27 +332,24 @@ function mouseWheel(event){
   else {
     gridSize += 5;
   }
-  // if (gridSize > MAZE_SIZE){
-  //   gridSize = MAZE_SIZE;
-  // }
 }
 
 //Displays the player
 function displayPlayer(){
   if (PacManMoveState === 0){
-    image(defaultPacManSprite, thePlayer.x, thePlayer.y, cellSize, cellSize);
+    image(defaultPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
   if (PacManMoveState === 1){
-    image(upPacManSprite, thePlayer.x, thePlayer.y, cellSize, cellSize);
+    image(upPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
   if (PacManMoveState === 2){
-    image(leftPacManSprite, thePlayer.x, thePlayer.y, cellSize, cellSize);
+    image(leftPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
   if (PacManMoveState === 3){
-    image(downPacManSprite, thePlayer.x, thePlayer.y, cellSize, cellSize);
+    image(downPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
   if (PacManMoveState === 4){
-    image(rightPacManSprite, thePlayer.x, thePlayer.y, cellSize, cellSize);
+    image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
 }
 
