@@ -2,7 +2,7 @@
 // Katos Booth
 // November 21st 2024
 
-const GRID_SEED = 12345;
+const GRID_SEED = 0;
 
 class Maze{
   constructor(cols, rows, seed){
@@ -53,7 +53,7 @@ class Maze{
       //Carve the path
       for (let y = 0; y < this.rows; y++){
         if (y % 2 ===0){
-          this.carvePath(this.cols - MAZE_SIZE +1, y);
+          this.carvePath(this.cols - MAZE_SIZE + 1, y);
         }
       }
     }
@@ -68,6 +68,14 @@ class Maze{
       }
     }
   }
+
+  createBox(neighbouringBoxX, neighbouringBoxY, colour){
+    if (this.grid[neighbouringBoxX][neighbouringBoxY] === IMPASSIBLE){
+      stroke(colour);
+      fill(colour);
+      square(screenX, screenY, cellSize);
+    }
+  }
   
   display(offsetX, offsetY){
     for (let y = 0; y < this.rows; y++) {
@@ -75,7 +83,7 @@ class Maze{
         const screenX = x * cellSize - offsetX;
         const screenY = y * cellSize - offsetY;
         if (screenX >= 0 && screenX < width && screenY >= 0 && screenY < height){
-          if (this.grid[y][x] === IMPASSIBLE) {
+          if (this.grid[y][x] === IMPASSIBLE){
             stroke("blue");
             fill("blue");
             square(screenX, screenY, cellSize);
@@ -89,7 +97,7 @@ class Maze{
 let maze;
 let cellSize;
 
-const MAZE_SIZE = 20;
+const MAZE_SIZE = 25;
 
 //visual grid size for the amount of blocks will be seen on screen
 let gridSize = 25;
@@ -109,7 +117,7 @@ const IMPASSIBLE = 1;
 let thePlayer = {
   x:0,
   y:0,
-  speed: 0,
+  speed: 2.5,
   spawnPositionX: 0,
   spawnPositionY: 0,
   spawnBox: 0,
@@ -185,7 +193,7 @@ function setup() {
   gridPositionX = width/2-50;
   gridPositionY = height/2-50;
 
-  maze = new Maze(MAZE_SIZE, MAZE_SIZE);
+  maze = new Maze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
 
   imageMode(CENTER);
 
@@ -205,10 +213,6 @@ function draw() {
   cameraOffsetX = thePlayer.x * cellSize - width /2;
   cameraOffsetY = thePlayer.y * cellSize - height /2;
   
-  //makes the speed go the same speed for the size of the grid, if it was a static number
-  //it would go super fast on a screen fitting a large amount of squares
-  //or super slow on a screen fitting a little amount of squares
-  thePlayer.speed = 0.25;
 
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
