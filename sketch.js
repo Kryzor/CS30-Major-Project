@@ -2,7 +2,7 @@
 // Katos Booth
 // November 21st 2024
 
-const GRID_SEED = 0;
+const GRID_SEED = 6;
 
 class Maze{
   constructor(cols, rows, seed){
@@ -11,7 +11,7 @@ class Maze{
     this.seed = seed;
     this.randomSeed = this.seededRandom(seed);
     this.grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
-    this.carvePath(0, 0);
+    this.carvePath(2, 0);
   }
 
   seededRandom(seed){
@@ -41,6 +41,7 @@ class Maze{
         this.carvePath(nx, ny);
       }
     });
+    // this.grid[y][x] = IMPASSIBLE;
   }
   
   //expands the maze
@@ -52,8 +53,8 @@ class Maze{
       this.cols += MAZE_SIZE;
       //Carve the path
       for (let y = 0; y < this.rows; y++){
-        if (y % 2 ===0){
-          this.carvePath(this.cols - MAZE_SIZE + 1, y);
+        if (y % 2 === 0){
+          this.carvePath(this.cols - MAZE_SIZE, y);
         }
       }
     }
@@ -68,24 +69,16 @@ class Maze{
       }
     }
   }
-
-  createBox(neighbouringBoxX, neighbouringBoxY, colour){
-    if (this.grid[neighbouringBoxX][neighbouringBoxY] === IMPASSIBLE){
-      stroke(colour);
-      fill(colour);
-      square(screenX, screenY, cellSize);
-    }
-  }
   
   display(offsetX, offsetY){
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         const screenX = x * cellSize - offsetX;
         const screenY = y * cellSize - offsetY;
-        if (screenX >= 0 && screenX < width && screenY >= 0 && screenY < height){
+        if (screenX > 0 - cellSize && screenX < width && screenY > 0 - cellSize && screenY < height){
           if (this.grid[y][x] === IMPASSIBLE){
-            stroke("blue");
-            fill("blue");
+            stroke(0, 0, 255);
+            fill(0, 0, 255);
             square(screenX, screenY, cellSize);
           }
         }
@@ -97,7 +90,7 @@ class Maze{
 let maze;
 let cellSize;
 
-const MAZE_SIZE = 25;
+const MAZE_SIZE = 32;
 
 //visual grid size for the amount of blocks will be seen on screen
 let gridSize = 25;
@@ -117,7 +110,7 @@ const IMPASSIBLE = 1;
 let thePlayer = {
   x:0,
   y:0,
-  speed: 2.5,
+  speed: 0.5,
   spawnPositionX: 0,
   spawnPositionY: 0,
   spawnBox: 0,
@@ -187,8 +180,8 @@ function setup() {
   cellSize = height/gridSize;
   
   //creates the spawn position for pac man
-  thePlayer.x = Math.floor(MAZE_SIZE / 2);
-  thePlayer.y = Math.floor(MAZE_SIZE / 2);
+  thePlayer.x = Math.round(MAZE_SIZE / 2);
+  thePlayer.y = Math.round(MAZE_SIZE / 2);
 
   gridPositionX = width/2-50;
   gridPositionY = height/2-50;
@@ -265,17 +258,6 @@ function createPlayer(){
 }
 
 function movePlayer() {
-  //center point
-  let playerGridX = Math.floor(thePlayer.x/cellSize);
-  let playerGridY = Math.floor(thePlayer.y/cellSize);
-
-  //directional points
-  let playerUpperGridY = Math.floor(thePlayer.y/cellSize-0.45); //up
-  let playerLowerGridY = Math.floor(thePlayer.y/cellSize+0.45); //down
-  let playerLeftGridX = Math.floor(thePlayer.x/cellSize-0.45); //left
-  let playerRightGridY = Math.floor(thePlayer.x/cellSize+0.45); //right
-  
-  //Checks states to move the player depending on that state
   const { x, y } = thePlayer;
   if (PacManMoveState === 1){ //up
     thePlayer.y -= thePlayer.speed;
