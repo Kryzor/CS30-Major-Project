@@ -2,7 +2,7 @@
 // Katos Booth
 // November 21st 2024
 
-const GRID_SEED = 6;
+const GRID_SEED = 3124527147;
 
 class Maze{
   constructor(cols, rows, seed){
@@ -30,6 +30,11 @@ class Maze{
     ];
 
 
+    // for (let i = 0; i < 2; i++){
+    //   for (let j = 0; j < 3; j++){
+    //     this.grid[j + Math.round(MAZE_SIZE/2)-2][i + Math.round(MAZE_SIZE/2)-1] = OPEN_TILE;
+    //   }
+    // }
 
     directions.sort(() => this.randomSeed() - 0.5);
     directions.forEach(({dx,dy}) => {
@@ -41,7 +46,6 @@ class Maze{
         this.carvePath(nx, ny);
       }
     });
-    // this.grid[y][x] = IMPASSIBLE;
   }
   
   //expands the maze
@@ -90,10 +94,10 @@ class Maze{
 let maze;
 let cellSize;
 
-const MAZE_SIZE = 32;
+const MAZE_SIZE = 25;
 
 //visual grid size for the amount of blocks will be seen on screen
-let gridSize = 25;
+let gridSize = MAZE_SIZE;
 
 //Display grid size variables
 let displayGridX;
@@ -206,13 +210,10 @@ function draw() {
   cameraOffsetX = thePlayer.x * cellSize - width /2;
   cameraOffsetY = thePlayer.y * cellSize - height /2;
   
-
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
   
   screenController();
-  checkMazeExpansion();
-  
 }
 
 //Controls which screen is allowed to be visible
@@ -228,8 +229,9 @@ function screenController(){
 //Displays the game screen
 function displayGameScreen(){
   background(0);
-
+  
   maze.display(cameraOffsetX, cameraOffsetY);
+  checkMazeExpansion();
   createPlayer();
   touchInputs();
 }
@@ -258,7 +260,8 @@ function createPlayer(){
 }
 
 function movePlayer() {
-  const { x, y } = thePlayer;
+  //playerGridCollision(thePlayer.x, thePlayer.y);
+  // const { x, y } = thePlayer;
   if (PacManMoveState === 1){ //up
     thePlayer.y -= thePlayer.speed;
   }
@@ -272,27 +275,14 @@ function movePlayer() {
     thePlayer.x += thePlayer.speed;
   }
   
-  //playerGridCollision(playerGridX, playerGridY, playerUpperGridY, playerLowerGridY,  playerLeftGridX, playerRightGridY);
+  if (maze[thePlayer.y+1][thePlayer.x] === IMPASSIBLE){ //up
+    thePlayer.y = thePlayer.y-1;
+  }
   inputsForGame();
 }
 
 //Detects the grid collision
-function playerGridCollision(gridX, gridY, upperGridY, lowerGridY, leftGridX, rightGridX){
-  if (mazeGrid[upperGridY][gridX] === IMPASSIBLE){ //up
-    thePlayer.y = thePlayer.y+cellSize/10;
-  }
-  else if (mazeGrid[lowerGridY][gridX] === IMPASSIBLE){ //down
-    thePlayer.y = thePlayer.y-cellSize/10;
-  }
-  else if (mazeGrid[gridY][leftGridX] === IMPASSIBLE){ //left
-    thePlayer.x = thePlayer.x+cellSize/10;
-  }
-  else if (mazeGrid[gridY][rightGridX] === IMPASSIBLE){ //right
-    thePlayer.x = thePlayer.x-cellSize/10;
-  }
-  else {
-    thePlayer.x = thePlayer.x;
-  }
+function playerGridCollision(x, y){
 }
 
 //Get the inputs for the game
