@@ -2,9 +2,9 @@
 // Katos Booth
 // November 21st 2024
 
-const GRID_SEED = 3124527147;
+const GRID_SEED = 327147;
 
-class Maze{
+class theMaze{
   constructor(cols, rows, seed){
     this.cols = cols;
     this.rows = rows;
@@ -30,11 +30,11 @@ class Maze{
     ];
 
 
-    // for (let i = 0; i < 2; i++){
-    //   for (let j = 0; j < 3; j++){
-    //     this.grid[j + Math.round(MAZE_SIZE/2)-2][i + Math.round(MAZE_SIZE/2)-1] = OPEN_TILE;
-    //   }
-    // }
+    for (let i = 0; i < 2; i++){
+      for (let j = 0; j < 3; j++){
+        this.grid[j + Math.round(MAZE_SIZE/2)-2][i + Math.round(MAZE_SIZE/2)-1] = OPEN_TILE;
+      }
+    }
 
     directions.sort(() => this.randomSeed() - 0.5);
     directions.forEach(({dx,dy}) => {
@@ -69,6 +69,16 @@ class Maze{
       for (let x = 0; x < this.rows; x++){
         if (x % 2 === 0){
           this.carvePath(x, this.rows - MAZE_SIZE);
+        }
+      }
+    }
+    if (direction === "up"){
+      const newRows = Array.from({ length: MAZE_SIZE}, () => Array(this.cols).fill(IMPASSIBLE));
+      this.grid.push(...newRows);
+      this.rows += MAZE_SIZE;
+      for (let x = 0; x < this.rows; x++){
+        if (x % 2 === 0){
+          this.carvePath(x, this.rows + MAZE_SIZE);
         }
       }
     }
@@ -114,7 +124,7 @@ const IMPASSIBLE = 1;
 let thePlayer = {
   x:0,
   y:0,
-  speed: 0.5,
+  speed: 0.1,
   spawnPositionX: 0,
   spawnPositionY: 0,
   spawnBox: 0,
@@ -190,7 +200,7 @@ function setup() {
   gridPositionX = width/2-50;
   gridPositionY = height/2-50;
 
-  maze = new Maze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
+  maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
 
   imageMode(CENTER);
 
@@ -245,13 +255,15 @@ function displayMainScreen(){
 
 function checkMazeExpansion(){
   const threshold = 3;
-
-  if (thePlayer.x >  maze.cols - threshold){
+  if (thePlayer.x > maze.cols - threshold){
     maze.expand("right");
   }
-  if (thePlayer.y >  maze.rows - threshold){
+  if (thePlayer.y > maze.rows - threshold){
     maze.expand("down");
   }
+  // if (thePlayer.y < maze.rows - threshold){
+  //   maze.expand("up");
+  // }
 }
 
 function createPlayer(){
@@ -260,7 +272,7 @@ function createPlayer(){
 }
 
 function movePlayer() {
-  //playerGridCollision(thePlayer.x, thePlayer.y);
+  playerGridCollision(thePlayer.x, thePlayer.y);
   // const { x, y } = thePlayer;
   if (PacManMoveState === 1){ //up
     thePlayer.y -= thePlayer.speed;
@@ -275,14 +287,25 @@ function movePlayer() {
     thePlayer.x += thePlayer.speed;
   }
   
-  if (maze[thePlayer.y+1][thePlayer.x] === IMPASSIBLE){ //up
-    thePlayer.y = thePlayer.y-1;
-  }
   inputsForGame();
 }
 
 //Detects the grid collision
-function playerGridCollision(x, y){
+function playerGridCollision(x, y) {
+  console.log(x, y);
+  // console.log(maze);
+  if (maze.grid[y-1][Math.round(x)] === IMPASSIBLE){ //up
+    thePlayer.y = Math.round(thePlayer.y)+0.5;
+  }
+  // if (maze.grid[y+0.5][x] === IMPASSIBLE){ //down
+  //   thePlayer.y = Math.round(thePlayer.y)-0.5;
+  // }
+  // if (maze.grid[y][x] === IMPASSIBLE){ //left
+  //   thePlayer.x = Math.round(thePlayer.x)+0.5;
+  // }
+  // if (maze.grid[y][x] === IMPASSIBLE){ //right
+  //   thePlayer.x = Math.floor(thePlayer.x)+0.5;
+  // }
 }
 
 //Get the inputs for the game
