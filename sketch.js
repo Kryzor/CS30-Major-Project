@@ -9,12 +9,12 @@ class theMaze{
     this.cols = cols;
     this.rows = rows;
     this.seed = seed;
-    this.randomSeed = this.seededRandom(seed);
+    this.randomSeed = this.seedTheNumber(seed);
     this.grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
     this.carvePath(2, 0);
   }
 
-  seededRandom(seed){
+  seedTheNumber(seed){
     let value = seed;
     return ()=>{
       value = (value * 9301 + 49297) % 233280;
@@ -78,7 +78,7 @@ class theMaze{
       this.rows += MAZE_SIZE;
       for (let x = 0; x < this.rows; x++){
         if (x % 2 === 0){
-          this.carvePath(x, this.rows + MAZE_SIZE);
+          this.carvePath(x, this.rows - MAZE_SIZE);
         }
       }
     }
@@ -124,10 +124,11 @@ const IMPASSIBLE = 1;
 let thePlayer = {
   x:0,
   y:0,
-  speed: 0.1,
+  speed: 0.15,
   spawnPositionX: 0,
   spawnPositionY: 0,
   spawnBox: 0,
+  nextMove: 0,
 };
 
 let cameraOffsetX = 0;
@@ -255,15 +256,15 @@ function displayMainScreen(){
 
 function checkMazeExpansion(){
   const threshold = 3;
-  if (thePlayer.x > maze.cols - threshold){
-    maze.expand("right");
+  if (thePlayer.y < maze.rows - threshold){
+    maze.expand("up");
   }
   if (thePlayer.y > maze.rows - threshold){
     maze.expand("down");
   }
-  // if (thePlayer.y < maze.rows - threshold){
-  //   maze.expand("up");
-  // }
+  if (thePlayer.x > maze.cols - threshold){
+    maze.expand("right");
+  }
 }
 
 function createPlayer(){
@@ -292,20 +293,24 @@ function movePlayer() {
 
 //Detects the grid collision
 function playerGridCollision(x, y) {
-  console.log(x, y);
-  // console.log(maze);
-  if (maze.grid[y-1][Math.round(x)] === IMPASSIBLE){ //up
+  if (maze.grid[Math.round(y)-1][Math.round(x - 0.45)] === IMPASSIBLE){ //up
     thePlayer.y = Math.round(thePlayer.y)+0.5;
+
+    //these are used to show the detection of collision
+    //square(width/2 - cellSize/8, height/2 - cellSize/2, cellSize/4);
   }
-  // if (maze.grid[y+0.5][x] === IMPASSIBLE){ //down
-  //   thePlayer.y = Math.round(thePlayer.y)-0.5;
-  // }
-  // if (maze.grid[y][x] === IMPASSIBLE){ //left
-  //   thePlayer.x = Math.round(thePlayer.x)+0.5;
-  // }
-  // if (maze.grid[y][x] === IMPASSIBLE){ //right
-  //   thePlayer.x = Math.floor(thePlayer.x)+0.5;
-  // }
+  if (maze.grid[Math.round(y)][Math.round(x - 0.45)] === IMPASSIBLE){ //down
+    thePlayer.y = Math.round(thePlayer.y)-0.5;
+    //square(width/2 - cellSize/8, height/2 + cellSize/2 - cellSize/4, cellSize/4);
+  }
+  if (maze.grid[Math.round(y - 0.45)][Math.round(x)-1] === IMPASSIBLE){ //left
+    thePlayer.x = Math.round(thePlayer.x)+0.5;
+    //square(width/2 - cellSize/2, height/2 - cellSize/8, cellSize/4);
+  }
+  if (maze.grid[Math.round(y - 0.45)][Math.round(x)] === IMPASSIBLE){ //right
+    thePlayer.x = Math.round(thePlayer.x)-0.5;
+    //square(width/2 + cellSize/2 - cellSize/4, height/2 - cellSize/8, cellSize/4);
+  }
 }
 
 //Get the inputs for the game
