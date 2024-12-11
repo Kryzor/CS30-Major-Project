@@ -11,7 +11,8 @@ class theMaze{
     this.seed = seed;
     this.randomSeed = this.seedTheNumber(seed);
     this.grid = Array.from({length:rows}, () => Array(cols).fill(IMPASSIBLE));
-    this.carvePath(2, 0);
+    // this.carvePath(2, 0);
+    this.generateBaseMaze;
   }
 
   seedTheNumber(seed){
@@ -21,64 +22,109 @@ class theMaze{
       return value / 233280;
     };
   }
-  carvePath(x, y){
-    const directions = [
-      {dx: 0, dy: -1},//up
-      {dx: 0, dy: 1},//down
-      {dx: 1, dy: 0},//right
-      {dx: -1, dy: 0},//left
-    ];
+  // carvePath(x, y){
+  //   const directions = [
+  //     {dx: 0, dy: -1},//up
+  //     {dx: 0, dy: 1},//down
+  //     {dx: 1, dy: 0},//right
+  //     {dx: -1, dy: 0},//left
+  //   ];
 
 
-    for (let i = 0; i < 2; i++){
-      for (let j = 0; j < 3; j++){
-        this.grid[j + Math.round(MAZE_SIZE/2)-2][i + Math.round(MAZE_SIZE/2)-1] = OPEN_TILE;
+  //   for (let i = 0; i < 2; i++){
+  //     for (let j = 0; j < 3; j++){
+  //       this.grid[j + Math.round(MAZE_SIZE/2)-2][i + Math.round(MAZE_SIZE/2)-1] = OPEN_TILE;
+  //     }
+  //   }
+
+  //   directions.sort(() => this.randomSeed() - 0.5);
+  //   directions.forEach(({dx,dy}) => {
+  //     const nx = x + dx * 2;
+  //     const ny = y + dy * 2;
+  //     if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.grid[ny][nx] === IMPASSIBLE){
+  //       this.grid[y + dy][x + dx] = OPEN_TILE;
+  //       this.grid[ny][nx] = OPEN_TILE;
+  //       this.carvePath(nx, ny);
+  //     }
+  //   });
+  // }
+
+  generateBaseMaze(){
+    const centerX = Math.floor(this.cols / 2);
+    const centerY = Math.floor(this.rows / 2);
+
+    for (let y = centerY - 2; y <= centerY + 2; y++){
+      for (let x = centerX - 2; x <= centerX + 2; x++){
+        this.grid[y][x] = OPEN_TILE;
       }
     }
 
-    directions.sort(() => this.randomSeed() - 0.5);
-    directions.forEach(({dx,dy}) => {
-      const nx = x + dx * 2;
-      const ny = y + dy * 2;
-      if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.grid[ny][nx] === IMPASSIBLE){
-        this.grid[y + dy][x + dx] = OPEN_TILE;
-        this.grid[ny][nx] = OPEN_TILE;
-        this.carvePath(nx, ny);
+    for (let y = 0; y < this.rows; y++){
+      for (let x = 0; x < this.cols; x++){
+        if (y % 2 === 0|| x % 2 === 0){
+          this.grid[y][x] = IMPASSIBLE;
+        }
+        else if (this.randomSeed() > 0.7){
+          this.grid[y][x] = IMPASSIBLE;
+        }
+        else {
+          this.grid[y][x] = OPEN_TILE;
+        }
       }
-    });
+    }
+    this.reflectHorizontally();
+    this.createConnectingPaths();
+  }
+
+  reflectHorizontally() {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++){
+        this.grid[y][this.cols - x - 1] - this.grid[y][x];
+      }
+    }
+  }
+
+  createConnectingPaths() {
+    for (let y = 2; y < this.rows - 2; y+=4){
+      for (let x = 2; x < this.cols - 2; x+=4){
+        this.grid[y][x] = OPEN_TILE;
+      }
+    }
   }
   
   //expands the maze
   expand(direction){
+    const newCols = this.cols;
+    const newRows = this.rows;
     if (direction === "right"){
       for (let row of this.grid){
         row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
       }
-      this.cols += MAZE_SIZE;
-      //Carve the path
-      for (let y = 0; y < this.rows; y++){
-        if (y % 2 === 0){
-          this.carvePath(this.cols - MAZE_SIZE, y);
-        }
-      }
     }
-    if (direction === "down"){
-      const newRows = Array.from({ length: MAZE_SIZE}, () => Array(this.cols).fill(IMPASSIBLE));
-      this.grid.push(...newRows);
-      this.rows += MAZE_SIZE;
-      for (let x = 0; x < this.rows; x++){
-        if (x % 2 === 0){
-          this.carvePath(x, this.rows - MAZE_SIZE);
-        }
-      }
+    else if (direction === "down"){
+      const newRowsArray = Array.from( {length: MAZE_SIZE }, () => Array(newCols).fill(IMPASSIBLE));
+      this.grid.push(...newRowsArray);
     }
-    if (direction === "up"){
-      const newRows = Array.from({ length: MAZE_SIZE}, () => Array(this.cols).fill(IMPASSIBLE));
-      this.grid.push(...newRows);
-      this.rows += MAZE_SIZE;
-      for (let x = 0; x < this.rows; x++){
-        if (x % 2 === 0){
-          this.carvePath(x, this.rows - MAZE_SIZE);
+    this.cols += direction === "right" ? MAZE_SIZE : 0;
+    this.rows += direction === "down" ? MAZE_SIZE : 0;
+
+    const offsetX = direction === "right" ? newCols - MAZE_SIZE : 0;
+    const offsetY = direction === "down" ? newRows - MAZE_SIZE : 0;
+
+    this.generateNewChunk(offsetX, offsetY);
+  }
+
+  generateNewChunk(offsetX, offsetY){
+    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
+      for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
+        if (y % 2 === 0|| x % 2 === 0){
+          this.grid[y][x] = IMPASSIBLE;
+        }
+        else if (this.randomSeed() > 0.7){
+          this.grid[y][x] = IMPASSIBLE;
+        }
+        else {
+          this.grid[y][x] = OPEN_TILE;
         }
       }
     }
@@ -256,9 +302,6 @@ function displayMainScreen(){
 
 function checkMazeExpansion(){
   const threshold = 3;
-  if (thePlayer.y < maze.rows - threshold){
-    maze.expand("up");
-  }
   if (thePlayer.y > maze.rows - threshold){
     maze.expand("down");
   }
@@ -273,7 +316,6 @@ function createPlayer(){
 }
 
 function movePlayer() {
-  playerGridCollision(thePlayer.x, thePlayer.y);
   // const { x, y } = thePlayer;
   if (PacManMoveState === 1){ //up
     thePlayer.y -= thePlayer.speed;
@@ -326,6 +368,9 @@ function inputsForGame(){
   }
   if (keyIsDown(39) === true || keyIsDown(68) === true){ //right
     PacManMoveState = 4;
+  }
+  if (!keyIsDown(67) === true){ //disable collision
+    playerGridCollision(thePlayer.x, thePlayer.y);
   }
 }
 
