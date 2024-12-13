@@ -55,17 +55,42 @@ class theMaze{
   //expands the maze
   expand(direction){
     if (direction === "right"){
-
+      this.expandRight();
     }
     else if (direction === "down"){
-
+      this.expandDown();
     }
     else if (direction === "left"){
-
+      this.expandLeft();
     }
     else if (direction === "up") {
-
+      this.expandUp();
     }
+  }
+
+  expandRight(){
+    for (let row of this.grid){
+      row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
+    }
+    this.cols += MAZE_SIZE;
+    this.generateNewChunk(this.cols - MAZE_SIZE, 0, "horizontal");
+  }
+  expandDown(){
+    const newRows = Array.from({"length": MAZE_SIZE}, () => Array(this.cols).fill(IMPASSIBLE));
+    this.grid.push(...newRows);
+    this.rows += MAZE_SIZE;
+    this.generateNewChunk(0, this.rows - MAZE_SIZE, "vertical");
+  }
+  expandLeft(){
+    const newCols = Array.from({"length": MAZE_SIZE}, () => Array(this.rows).fill(IMPASSIBLE));
+    for (let row of this.grid){
+      row.shift(...newCols);
+    }
+    this.cols += MAZE_SIZE;
+    this.generateNewChunk(this.cols + MAZE_SIZE, 0, "horizontal");
+  }
+  expandUp(){
+
   }
 
   generateNewChunk(offsetX, offsetY){
@@ -273,6 +298,9 @@ function checkMazeExpansion(){
   }
   if (thePlayer.x > maze.cols - threshold){
     maze.expand("right");
+  }
+  if (thePlayer.x < 0 + threshold){
+    maze.expand("left");
   }
 }
 
