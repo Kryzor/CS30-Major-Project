@@ -174,9 +174,10 @@ let cameraOffsetY = 0;
 //the state for the players movement
 let PacManMoveState = 0;
 
-let spriteState = 0;
-let lastSpriteTime;
 const SPRITE_ANIMATION_DURATION = 200;
+const SPRITE_STATES = [0, 1, 2 , 3, 4, 5, 4, 3, 2, 1];
+let spriteState = 0;
+let lastSpriteTime = 0;
 
 let defaultPacManSprite;
 
@@ -299,9 +300,9 @@ function checkMazeExpansion(){
   if (thePlayer.x > maze.cols - threshold){
     maze.expand("right");
   }
-  if (thePlayer.x < 0 + threshold){
-    maze.expand("left");
-  }
+  // if (thePlayer.x < maze.cols + threshold){
+  //   maze.expand("left");
+  // }
 }
 
 function createPlayer(){
@@ -379,19 +380,27 @@ function mouseWheel(event){
 
 //Displays the player
 function displayPlayer(){
+  if (spriteState === 0 && millis() > lastSpriteTime + SPRITE_ANIMATION_DURATION){
+    lastSpriteTime = millis();
+    spriteState++;
+  }
+  if (spriteState === 1 && millis() > lastSpriteTime + SPRITE_ANIMATION_DURATION){
+    lastSpriteTime = millis();
+    spriteState--;
+  }
   if (PacManMoveState === 0){
     image(defaultPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
-  if (PacManMoveState === 1){
+  else if (PacManMoveState === 1){
     image(upPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
-  if (PacManMoveState === 2){
+  else if (PacManMoveState === 2){
     image(leftPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
-  if (PacManMoveState === 3){
+  else if (PacManMoveState === 3){
     image(downPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
-  if (PacManMoveState === 4){
+  else if (PacManMoveState === 4){
     image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
 }
