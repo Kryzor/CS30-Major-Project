@@ -4,7 +4,7 @@
 
 const GRID_SEED = 327147;
 
-class theMaze{
+class theMaze {
   constructor(cols, rows, seed){
     this.cols = cols;
     this.rows = rows;
@@ -138,6 +138,47 @@ class theMaze{
   }
 }
 
+class thePlayer {
+  constructor(playerX, playerY){
+    this.x = playerX;
+    this.y = playerY;
+    this.speed = 0.15;
+  }
+
+  movePlayer(){
+    if (PacManMoveState === 1){ //up
+      this.y -= this.speed;
+    }
+    if (PacManMoveState === 2){ //left
+      this.x -= this.speed;
+    }
+    if (PacManMoveState === 3){ //down
+      this.y += this.speed;
+    }
+    if (PacManMoveState === 4){ //right
+      this.x += this.speed;
+    }
+  }
+
+  displayPlayer(){
+    if (PacManMoveState === 0){
+      image(defaultPacManSprite, width / 2, height / 2, cellSize, cellSize);
+    }
+    else if (PacManMoveState === 1){
+      image(upPacManSprite, width / 2, height / 2, cellSize, cellSize);
+    }
+    else if (PacManMoveState === 2){
+      image(leftPacManSprite, width / 2, height / 2, cellSize, cellSize);
+    }
+    else if (PacManMoveState === 3){
+      image(downPacManSprite, width / 2, height / 2, cellSize, cellSize);
+    }
+    else if (PacManMoveState === 4){
+      image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
+    }
+  }
+}
+
 let maze;
 let cellSize;
 
@@ -158,42 +199,29 @@ const OPEN_TILE = 0;
 const IMPASSIBLE = 1;
 
 //player variables
-let thePlayer = {
-  x:0,
-  y:0,
-  speed: 0.15,
-  spawnPositionX: 0,
-  spawnPositionY: 0,
-  spawnBox: 0,
-  nextMove: 0,
-};
+// let thePlayer = {
+//   x:0,
+//   y:0,
+//   speed: 0.15,
+//   spawnPositionX: 0,
+//   spawnPositionY: 0,
+//   spawnBox: 0,
+//   nextMove: 0,
+// };
 
 let cameraOffsetX = 0;
 let cameraOffsetY = 0;
 
+let player;
+
 //the state for the players movement
 let PacManMoveState = 0;
-
-const SPRITE_ANIMATION_DURATION = 200;
-const SPRITE_STATES = [0, 1, 2 , 3, 4, 5, 4, 3, 2, 1];
-let spriteState = 0;
-let lastSpriteTime = 0;
 
 let defaultPacManSprite;
 
 let rightPacManSprite;
-let rightPacManSprite1;
-let rightPacManSprite2;
-let rightPacManSprite3;
-let rightPacManSprite4;
-let rightPacManSprite5;
 
 let downPacManSprite;
-let downPacManSprite1;
-let downPacManSprite2;
-let downPacManSprite3;
-let downPacManSprite4;
-let downPacManSprite5;
 
 let leftPacManSprite;
 
@@ -202,25 +230,17 @@ let upPacManSprite;
 //the state for the screen
 let screenState = 1;
 
-let gridPositionX = 0;
-let gridPositionY = 0;
-
 function preload(){
   //loads the sprites
   defaultPacManSprite = loadImage("images/pacman/pacman-default.png"); 
 
-  rightPacManSprite = loadImage("images/pacman/pacman-right0.png"); 
-  rightPacManSprite1 = loadImage("images/pacman/pacman-right1.png"); 
-  rightPacManSprite2 = loadImage("images/pacman/pacman-right2.png");
-  rightPacManSprite3 = loadImage("images/pacman/pacman-right3.png"); 
-  rightPacManSprite4 = loadImage("images/pacman/pacman-right4.png");
-  rightPacManSprite5 = loadImage("images/pacman/pacman-right5.png"); 
+  rightPacManSprite = loadImage("images/pacman/pacman-right.gif"); 
   
-  downPacManSprite = loadImage("images/pacman/pacman-down0.png");
+  downPacManSprite = loadImage("images/pacman/pacman-down.gif");
   
-  leftPacManSprite = loadImage("images/pacman/pacman-left0.png"); 
+  leftPacManSprite = loadImage("images/pacman/pacman-left.gif"); 
   
-  upPacManSprite = loadImage("images/pacman/pacman-up0.png"); 
+  upPacManSprite = loadImage("images/pacman/pacman-up.gif"); 
 }
 
 function setup() {
@@ -233,11 +253,6 @@ function setup() {
   cellSize = height/gridSize;
   
   //creates the spawn position for pac man
-  thePlayer.x = Math.round(MAZE_SIZE / 2);
-  thePlayer.y = Math.round(MAZE_SIZE / 2);
-
-  gridPositionX = width/2-50;
-  gridPositionY = height/2-50;
 
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
 
@@ -256,8 +271,6 @@ function windowResized(){
 function draw() {
   cellSize = height/gridSize;
 
-  cameraOffsetX = thePlayer.x * cellSize - width /2;
-  cameraOffsetY = thePlayer.y * cellSize - height /2;
   
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
@@ -278,10 +291,14 @@ function screenController(){
 //Displays the game screen
 function displayGameScreen(){
   background(0);
-  
   maze.display(cameraOffsetX, cameraOffsetY);
+  player = new thePlayer(Math.round(MAZE_SIZE / 2),Math.round(MAZE_SIZE / 2));
+  player.movePlayer();
+  player.displayPlayer();
+  cameraOffsetX = player.x * cellSize - width /2;
+  cameraOffsetY = player.y * cellSize - height /2;
   checkMazeExpansion();
-  createPlayer();
+  inputsForGame();
   touchInputs();
 }
 
@@ -294,15 +311,12 @@ function displayMainScreen(){
 
 function checkMazeExpansion(){
   const threshold = 3;
-  if (thePlayer.y > maze.rows - threshold){
+  if (player.y > maze.rows - threshold){
     maze.expand("down");
   }
-  if (thePlayer.x > maze.cols - threshold){
+  if (player.x > maze.cols - threshold){
     maze.expand("right");
   }
-  // if (thePlayer.x < maze.cols + threshold){
-  //   maze.expand("left");
-  // }
 }
 
 function createPlayer(){
@@ -310,42 +324,24 @@ function createPlayer(){
   movePlayer();
 }
 
-function movePlayer() {
-  // const { x, y } = thePlayer;
-  if (PacManMoveState === 1){ //up
-    thePlayer.y -= thePlayer.speed;
-  }
-  if (PacManMoveState === 2){ //left
-    thePlayer.x -= thePlayer.speed;
-  }
-  if (PacManMoveState === 3){ //down
-    thePlayer.y += thePlayer.speed;
-  }
-  if (PacManMoveState === 4){ //right
-    thePlayer.x += thePlayer.speed;
-  }
-  
-  inputsForGame();
-}
-
 //Detects the grid collision
 function playerGridCollision(x, y) {
   if (maze.grid[Math.round(y)-1][Math.round(x - 0.45)] === IMPASSIBLE){ //up
-    thePlayer.y = Math.round(thePlayer.y)+0.5;
+    player.y = Math.round(player.y)+0.5;
 
     //these are used to show the detection of collision
     //square(width/2 - cellSize/8, height/2 - cellSize/2, cellSize/4);
   }
   if (maze.grid[Math.round(y)][Math.round(x - 0.45)] === IMPASSIBLE){ //down
-    thePlayer.y = Math.round(thePlayer.y)-0.5;
+    player.y = Math.round(player.y)-0.5;
     //square(width/2 - cellSize/8, height/2 + cellSize/2 - cellSize/4, cellSize/4);
   }
   if (maze.grid[Math.round(y - 0.45)][Math.round(x)-1] === IMPASSIBLE){ //left
-    thePlayer.x = Math.round(thePlayer.x)+0.5;
+    player.x = Math.round(player.x)+0.5;
     //square(width/2 - cellSize/2, height/2 - cellSize/8, cellSize/4);
   }
   if (maze.grid[Math.round(y - 0.45)][Math.round(x)] === IMPASSIBLE){ //right
-    thePlayer.x = Math.round(thePlayer.x)-0.5;
+    player.x = Math.round(player.x)-0.5;
     //square(width/2 + cellSize/2 - cellSize/4, height/2 - cellSize/8, cellSize/4);
   }
 }
@@ -365,7 +361,7 @@ function inputsForGame(){
     PacManMoveState = 4;
   }
   if (keyIsDown(67) === true){ //disable collision
-    playerGridCollision(thePlayer.x, thePlayer.y);
+    playerGridCollision(player.x, player.y);
   }
 }
 
@@ -375,33 +371,6 @@ function mouseWheel(event){
   }
   else {
     gridSize += 5;
-  }
-}
-
-//Displays the player
-function displayPlayer(){
-  if (spriteState === 0 && millis() > lastSpriteTime + SPRITE_ANIMATION_DURATION){
-    lastSpriteTime = millis();
-    spriteState++;
-  }
-  if (spriteState === 1 && millis() > lastSpriteTime + SPRITE_ANIMATION_DURATION){
-    lastSpriteTime = millis();
-    spriteState--;
-  }
-  if (PacManMoveState === 0){
-    image(defaultPacManSprite, width / 2, height / 2, cellSize, cellSize);
-  }
-  else if (PacManMoveState === 1){
-    image(upPacManSprite, width / 2, height / 2, cellSize, cellSize);
-  }
-  else if (PacManMoveState === 2){
-    image(leftPacManSprite, width / 2, height / 2, cellSize, cellSize);
-  }
-  else if (PacManMoveState === 3){
-    image(downPacManSprite, width / 2, height / 2, cellSize, cellSize);
-  }
-  else if (PacManMoveState === 4){
-    image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
   }
 }
 
