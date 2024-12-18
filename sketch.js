@@ -149,15 +149,16 @@ class thePlayer {
     if (PacManMoveState === 1){ //up
       this.y -= this.speed;
     }
-    if (PacManMoveState === 2){ //left
+    else if (PacManMoveState === 2){ //left
       this.x -= this.speed;
     }
-    if (PacManMoveState === 3){ //down
+    else if (PacManMoveState === 3){ //down
       this.y += this.speed;
     }
-    if (PacManMoveState === 4){ //right
+    else if (PacManMoveState === 4){ //right
       this.x += this.speed;
     }
+    inputsForGame();
   }
 
   displayPlayer(){
@@ -245,7 +246,7 @@ function preload(){
 
 function setup() {
   frameRate(60);
-
+  
   //creates the screen
   createCanvas(windowWidth, windowHeight);
   
@@ -253,8 +254,9 @@ function setup() {
   cellSize = height/gridSize;
   
   //creates the spawn position for pac man
-
+  
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
+  player = new thePlayer(Math.round(MAZE_SIZE / 2),Math.round(MAZE_SIZE / 2));
 
   imageMode(CENTER);
 
@@ -271,7 +273,6 @@ function windowResized(){
 function draw() {
   cellSize = height/gridSize;
 
-  
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
   
@@ -292,13 +293,11 @@ function screenController(){
 function displayGameScreen(){
   background(0);
   maze.display(cameraOffsetX, cameraOffsetY);
-  player = new thePlayer(Math.round(MAZE_SIZE / 2),Math.round(MAZE_SIZE / 2));
   player.movePlayer();
   player.displayPlayer();
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
   checkMazeExpansion();
-  inputsForGame();
   touchInputs();
 }
 
