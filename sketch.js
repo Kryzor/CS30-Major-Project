@@ -180,6 +180,41 @@ class thePlayer {
   }
 }
 
+class ghost{
+  constructor(ghostX, ghostY){
+    this.x = ghostX;
+    this.y = ghostY;
+    this.speed = 0.15;
+  }
+  moveGhost(){
+    //Base position
+    this.x = -cameraOffsetX;
+    this.y = -cameraOffsetY;
+  }
+  displayGhost(){
+    if (ghostMoveState === 0){
+      image(defaultGhostSprite, this.x, this.y, cellSize, cellSize);
+      image(defaultGhostEyesSprite, this.x, this.y, cellSize, cellSize);
+    }
+    else if (ghostMoveState === 1){
+      image(upGhostSprite, this.x, this.y, cellSize, cellSize);
+      image(upGhostEyesSprite, this.x, this.y, cellSize, cellSize);
+    }
+    if (ghostMoveState === 2){
+      image(leftGhostSprite, this.x, this.y, cellSize, cellSize);
+      image(leftGhostEyesSprite, this.x, this.y, cellSize, cellSize);
+    }
+    else if (ghostMoveState === 3){
+      image(downGhostSprite, this.x, this.y, cellSize, cellSize);
+      image(downGhostEyesSprite, this.x, this.y, cellSize, cellSize);
+    }
+    else if (ghostMoveState === 4){
+      image(rightGhostSprite, this.x, this.y, cellSize, cellSize);
+      image(rightGhostEyesSprite, this.x, this.y, cellSize, cellSize);
+    }
+  }
+}
+
 let maze;
 let cellSize;
 
@@ -215,18 +250,29 @@ let cameraOffsetY = 0;
 
 let player;
 
+let ghostsArray = [];
+
 //the state for the players movement
 let PacManMoveState = 0;
+let ghostMoveState = 0;
+let ghostState = 0;
 
 let defaultPacManSprite;
-
 let rightPacManSprite;
-
 let downPacManSprite;
-
 let leftPacManSprite;
-
 let upPacManSprite;
+
+let defaultGhostSprite;
+let upGhostSprite;
+let rightGhostSprite;
+let downGhostSprite;
+let leftGhostSprite;
+let defaultGhostEyesSprite;
+let upGhostEyesSprite;
+let rightGhostEyesSprite;
+let downGhostEyesSprite;
+let leftGhostEyesSprite;
 
 //the state for the screen
 let screenState = 1;
@@ -234,14 +280,21 @@ let screenState = 1;
 function preload(){
   //loads the sprites
   defaultPacManSprite = loadImage("images/pacman/pacman-default.png"); 
-
   rightPacManSprite = loadImage("images/pacman/pacman-right.gif"); 
-  
   downPacManSprite = loadImage("images/pacman/pacman-down.gif");
-  
   leftPacManSprite = loadImage("images/pacman/pacman-left.gif"); 
-  
-  upPacManSprite = loadImage("images/pacman/pacman-up.gif"); 
+  upPacManSprite = loadImage("images/pacman/pacman-up.gif");
+
+  defaultGhostSprite = loadImage("images/ghost/ghost_default.png");
+  upGhostSprite = loadImage("images/ghost/ghost_up.gif");
+  rightGhostSprite = loadImage("images/ghost/ghost_right.gif");
+  downGhostSprite = loadImage("images/ghost/ghost_down.gif"); 
+  leftGhostSprite = loadImage("images/ghost/ghost_left.gif");
+  defaultGhostEyesSprite = loadImage("images/ghost/ghost_eyes_default.png");
+  upGhostEyesSprite = loadImage("images/ghost/ghost_eyes_up.png"); 
+  rightGhostEyesSprite = loadImage("images/ghost/ghost_eyes_right.png");
+  downGhostEyesSprite = loadImage("images/ghost/ghost_eyes_down.png"); 
+  leftGhostEyesSprite = loadImage("images/ghost/ghost_eyes_left.png"); 
 }
 
 function setup() {
@@ -257,7 +310,8 @@ function setup() {
   
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
   player = new thePlayer(Math.round(MAZE_SIZE / 2),Math.round(MAZE_SIZE / 2));
-
+  ghostsArray.push(new ghost(0, 0));
+  
   imageMode(CENTER);
 
   noSmooth();
@@ -295,6 +349,8 @@ function displayGameScreen(){
   maze.display(cameraOffsetX, cameraOffsetY);
   player.movePlayer();
   player.displayPlayer();
+  ghostsArray[0].displayGhost();
+  ghostsArray[0].moveGhost(cameraOffsetX, cameraOffsetY);
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
   checkMazeExpansion();
