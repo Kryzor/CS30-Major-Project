@@ -27,7 +27,7 @@ class theMaze {
     const centerY = Math.floor(this.cols / 2);
     for (let y = 0; y < this.rows; y++){
       for (let x = 0; x < this.cols; x++){
-        if (y % 2 === 0|| x % 2 === 0){
+        if (y % 2 === 0 || x % 2 === 0){
           this.grid[y][x] = IMPASSIBLE;
         }
         else if (this.randomSeed() > 0.5){
@@ -35,7 +35,8 @@ class theMaze {
         }
       }
     }
-    for (let y = centerY - 1; y <= centerY + 1; y++){
+    //spawn box
+    for (let y = centerY - 1; y <= centerY+1; y++){
       for (let x = centerX - 1; x <= centerX + 1; x++){
         this.grid[y][x] = OPEN_TILE;
       }
@@ -51,8 +52,36 @@ class theMaze {
       }
     }
   }
+
+  generateNewChunk(offsetX, offsetY){
+    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
+      for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
+        if (y % 2 === 0|| x % 2 === 0){
+          this.grid[y][x] = IMPASSIBLE;
+        }
+        else if (this.randomSeed() > 0.5){
+          this.grid[y][x] = OPEN_TILE;
+        }
+        else {
+          this.grid[y][x] = OPEN_TILE;
+        }
+      }
+    }
+    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
+      const  midX = offsetX + Math.floor(MAZE_SIZE / 2);
+      for (let x = offsetX; x < midX; x++){
+        this.grid[y][2 * midX - x - 1] = this.grid[y][x];
+      }
+    }
+    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
+      this.grid[y][offsetX] = OPEN_TILE;
+    }
+    for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
+      this.grid[offsetY][x] = OPEN_TILE;
+    }
+  }
   
-  //expands the maze
+  //expands the maze depending on direction
   expand(direction){
     if (direction === "right"){
       this.expandRight();
@@ -67,7 +96,7 @@ class theMaze {
       this.expandUp();
     }
   }
-
+  
   expandRight(){
     for (let row of this.grid){
       row.push(...Array(MAZE_SIZE).fill(IMPASSIBLE));
@@ -90,36 +119,8 @@ class theMaze {
     this.generateNewChunk(this.cols + MAZE_SIZE, 0, "horizontal");
   }
   expandUp(){
-
   }
 
-  generateNewChunk(offsetX, offsetY){
-    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-      for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
-        if (y % 2 === 0|| x % 2 === 0){
-          this.grid[y][x] = IMPASSIBLE;
-        }
-        else if (this.randomSeed() > 0.7){
-          this.grid[y][x] = IMPASSIBLE;
-        }
-        else {
-          this.grid[y][x] = OPEN_TILE;
-        }
-      }
-    }
-    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-      const  midX = offsetX + Math.floor(MAZE_SIZE / 2);
-      for (let x = offsetX; x < midX; x++){
-        this.grid[y][2 * midX - x - 1] = this.grid[y][x];
-      }
-    }
-    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-      this.grid[y][offsetX] = OPEN_TILE;
-    }
-    for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
-      this.grid[offsetY][x] = OPEN_TILE;
-    }
-  }
   
   display(offsetX, offsetY){
     for (let y = 0; y < this.rows; y++) {
@@ -127,10 +128,15 @@ class theMaze {
         const screenX = x * cellSize - offsetX;
         const screenY = y * cellSize - offsetY;
         if (screenX > 0 - cellSize && screenX < width && screenY > 0 - cellSize && screenY < height){
-          if (this.grid[y][x] === IMPASSIBLE){
+          if (this.grid[y][x] === IMPASSIBLE && this.grid[y][x+1] !== IMPASSIBLE){
             stroke(0, 0, 255);
             fill(0, 0, 255);
             square(screenX, screenY, cellSize);
+          }
+          if (this.grid[y][x] === IMPASSIBLE && this.grid[y][x+1] === IMPASSIBLE){
+            stroke(0, 255, 0, 128);
+            fill(0, 255, 0, 128);
+            rect(screenX, screenY, cellSize, cellSize);
           }
         }
       }
@@ -144,7 +150,7 @@ class thePlayer {
     this.y = playerY;
     this.speed = 0.15;
   }
-
+  
   movePlayer(){
     if (PacManMoveState === 1){ //up
       this.y -= this.speed;
@@ -160,7 +166,7 @@ class thePlayer {
     }
     inputsForGame();
   }
-
+  
   displayPlayer(){
     if (PacManMoveState === 0){
       image(defaultPacManSprite, width / 2, height / 2, cellSize, cellSize);
@@ -247,9 +253,9 @@ const IMPASSIBLE = 1;
 
 let cameraOffsetX = 0;
 let cameraOffsetY = 0;
-
+  
 let player;
-
+  
 let ghostsArray = [];
 
 //the state for the players movement
@@ -284,7 +290,7 @@ function preload(){
   downPacManSprite = loadImage("images/pacman/pacman-down.gif");
   leftPacManSprite = loadImage("images/pacman/pacman-left.gif"); 
   upPacManSprite = loadImage("images/pacman/pacman-up.gif");
-
+  
   defaultGhostSprite = loadImage("images/ghost/ghost_default.png");
   upGhostSprite = loadImage("images/ghost/ghost_up.gif");
   rightGhostSprite = loadImage("images/ghost/ghost_right.gif");
@@ -309,6 +315,7 @@ function setup() {
   //creates the spawn position for pac man
   
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
+  maze.generateBaseMaze();
   player = new thePlayer(Math.round(MAZE_SIZE / 2),Math.round(MAZE_SIZE / 2));
   ghostsArray.push(new ghost(0, 0));
   
@@ -325,8 +332,7 @@ function windowResized(){
 }
 
 function draw() {
-  cellSize = height/gridSize;
-
+  
   displayGridX = width/cellSize;
   displayGridY = height/cellSize;
   
@@ -351,6 +357,7 @@ function displayGameScreen(){
   player.displayPlayer();
   ghostsArray[0].displayGhost();
   ghostsArray[0].moveGhost(cameraOffsetX, cameraOffsetY);
+  cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
   checkMazeExpansion();
