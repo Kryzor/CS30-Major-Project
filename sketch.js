@@ -31,7 +31,7 @@ class theMaze {
           this.grid[y][x] = IMPASSIBLE;
         }
         else if (this.randomSeed() > 0.5){
-          this.grid[y][x] = OPEN_TILE;
+          this.grid[y][x] = OPEN_TILE_WITH_PELLET;
         }
       }
     }
@@ -56,29 +56,26 @@ class theMaze {
   generateNewChunk(offsetX, offsetY){
     for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
       for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
-        if (y % 2 === 0|| x % 2 === 0){
+        if (y % 2 === 0 || x % 2 === 0){
+          this.grid[y][x] = OPEN_TILE;
+        }
+        if (this.randomSeed() > 0.5){
           this.grid[y][x] = IMPASSIBLE;
         }
-        else if (this.randomSeed() > 0.5){
-          this.grid[y][x] = OPEN_TILE;
-        }
-        else {
-          this.grid[y][x] = OPEN_TILE;
-        }
       }
     }
-    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-      const  midX = offsetX + Math.floor(MAZE_SIZE / 2);
-      for (let x = offsetX; x < midX; x++){
-        this.grid[y][2 * midX - x - 1] = this.grid[y][x];
-      }
-    }
-    for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-      this.grid[y][offsetX] = OPEN_TILE;
-    }
-    for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
-      this.grid[offsetY][x] = OPEN_TILE;
-    }
+    // for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
+    //   const  midX = offsetX + Math.floor(MAZE_SIZE / 2);
+    //   for (let x = offsetX; x < midX; x++){
+    //     this.grid[y][2 * midX - x - 1] = this.grid[y][x];
+    //   }
+    // }
+    // for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
+    //   this.grid[y][offsetX] = OPEN_TILE;
+    // }
+    // for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
+    //   this.grid[offsetY][x] = OPEN_TILE;
+    // }
   }
   
   //expands the maze depending on direction
@@ -128,15 +125,20 @@ class theMaze {
         const screenX = x * cellSize - offsetX;
         const screenY = y * cellSize - offsetY;
         if (screenX > 0 - cellSize && screenX < width && screenY > 0 - cellSize && screenY < height){
-          if (this.grid[y][x] === IMPASSIBLE && this.grid[y][x+1] !== IMPASSIBLE){
+          if (this.grid[y][x] === OPEN_TILE_WITH_PELLET){
+            stroke(0, 0, 0);
+            fill(0, 0, 0);
+            image(pelletSprite, screenX+cellSize/2, screenY+cellSize/2, cellSize, cellSize);
+          }
+          else if (this.grid[y][x] === OPEN_TILE_WITH_LARGE_PELLET){
+            stroke(0, 0, 0);
+            fill(0, 0, 0);
+            image(largePelletSprite, screenX+cellSize/2, screenY+cellSize/2, cellSize, cellSize);
+          }
+          else if (this.grid[y][x] === IMPASSIBLE){
             stroke(0, 0, 255);
             fill(0, 0, 255);
             square(screenX, screenY, cellSize);
-          }
-          if (this.grid[y][x] === IMPASSIBLE && this.grid[y][x+1] === IMPASSIBLE){
-            stroke(0, 255, 0, 128);
-            fill(0, 255, 0, 128);
-            rect(screenX, screenY, cellSize, cellSize);
           }
         }
       }
@@ -194,8 +196,9 @@ class ghost{
   }
   moveGhost(){
     //Base position
-    this.x = -cameraOffsetX;
-    this.y = -cameraOffsetY;
+    if (ghostMoveState === 1){
+      this.y -= this.speed;
+    }
   }
   displayGhost(){
     if (ghostMoveState === 0){
@@ -206,7 +209,7 @@ class ghost{
       image(upGhostSprite, this.x, this.y, cellSize, cellSize);
       image(upGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
-    if (ghostMoveState === 2){
+    else if (ghostMoveState === 2){
       image(leftGhostSprite, this.x, this.y, cellSize, cellSize);
       image(leftGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
@@ -236,20 +239,13 @@ let displayGridY;
 //freeze variable for when the game pauses or when the player kills a ghost
 let freezeGame = 0;
 
+let score = 0;
+
 //grid states
 const OPEN_TILE = 0;
 const IMPASSIBLE = 1;
-
-//player variables
-// let thePlayer = {
-//   x:0,
-//   y:0,
-//   speed: 0.15,
-//   spawnPositionX: 0,
-//   spawnPositionY: 0,
-//   spawnBox: 0,
-//   nextMove: 0,
-// };
+const OPEN_TILE_WITH_PELLET = 2;
+const OPEN_TILE_WITH_LARGE_PELLET = 3;
 
 let cameraOffsetX = 0;
 let cameraOffsetY = 0;
@@ -268,6 +264,9 @@ let rightPacManSprite;
 let downPacManSprite;
 let leftPacManSprite;
 let upPacManSprite;
+
+let pelletSprite;
+let largePelletSprite;
 
 let defaultGhostSprite;
 let upGhostSprite;
@@ -290,6 +289,9 @@ function preload(){
   downPacManSprite = loadImage("images/pacman/pacman-down.gif");
   leftPacManSprite = loadImage("images/pacman/pacman-left.gif"); 
   upPacManSprite = loadImage("images/pacman/pacman-up.gif");
+
+  pelletSprite = loadImage("images/pellets/pellet.png");
+  largePelletSprite = loadImage("images/pellets/large_pellet.png");
   
   defaultGhostSprite = loadImage("images/ghost/ghost_default.png");
   upGhostSprite = loadImage("images/ghost/ghost_up.gif");
@@ -355,11 +357,16 @@ function displayGameScreen(){
   maze.display(cameraOffsetX, cameraOffsetY);
   player.movePlayer();
   player.displayPlayer();
+  playerEatsPellet(player.x, player.y);
   ghostsArray[0].displayGhost();
-  ghostsArray[0].moveGhost(cameraOffsetX, cameraOffsetY);
+  ghostsArray[0].moveGhost(-cameraOffsetX, -cameraOffsetY);
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
+  fill(255);
+  textAlign(LEFT);
+  textSize(20);
+  text(score, 0, 20);
   checkMazeExpansion();
   touchInputs();
 }
@@ -379,11 +386,9 @@ function checkMazeExpansion(){
   if (player.x > maze.cols - threshold){
     maze.expand("right");
   }
-}
-
-function createPlayer(){
-  displayPlayer();
-  movePlayer();
+  if (player.x < 0 + threshold){
+    maze.expand("left");
+  }
 }
 
 //Detects the grid collision
@@ -393,6 +398,7 @@ function playerGridCollision(x, y) {
 
     //these are used to show the detection of collision
     //square(width/2 - cellSize/8, height/2 - cellSize/2, cellSize/4);
+    //somehow all of these display the collision on each direction, i have no clue how
   }
   if (maze.grid[Math.round(y)][Math.round(x - 0.45)] === IMPASSIBLE){ //down
     player.y = Math.round(player.y)-0.5;
@@ -407,11 +413,22 @@ function playerGridCollision(x, y) {
     //square(width/2 + cellSize/2 - cellSize/4, height/2 - cellSize/8, cellSize/4);
   }
 }
+function playerEatsPellet(x, y){
+  if(maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] === OPEN_TILE_WITH_PELLET){
+    score += 10;
+    maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] = OPEN_TILE;
+  }
+  else if(maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] === OPEN_TILE_WITH_LARGE_PELLET){
+    score += 1000000;
+    maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] = OPEN_TILE;
+  }
+}
 
 //Get the inputs for the game
 function inputsForGame(){
   if (keyIsDown(38) === true || keyIsDown(87) === true){ //up
     PacManMoveState = 1;
+    ghostMoveState = 1;
   }
   if (keyIsDown(37) === true || keyIsDown(65) === true){ //left
     PacManMoveState = 2;
