@@ -21,6 +21,27 @@ class theMaze {
       return value / 233280;
     };
   }
+  carvePath(x, y){
+    const directions = [
+      {dx: 0, dy: -1},//up
+      {dx: 0, dy: 1},//down
+      {dx: 1, dy: 0},//right
+      {dx: -1, dy: 0},//left
+    ];
+
+
+
+    directions.sort(() => this.randomSeed() - 0.5);
+    directions.forEach(({dx,dy}) => {
+      const nx = x + dx * 2;
+      const ny = y + dy * 2;
+      if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows && this.grid[ny][nx] === IMPASSIBLE){
+        this.grid[y + dy][x + dx] = OPEN_TILE_WITH_PELLET;
+        this.grid[ny][nx] = OPEN_TILE_WITH_PELLET;
+        this.carvePath(nx, ny);
+      }
+    });
+  }
 
   generateBaseMaze(){
     const centerX = Math.floor(this.rows / 2);
@@ -30,12 +51,28 @@ class theMaze {
         if (y % 2 === 0 || x % 2 === 0){
           this.grid[y][x] = IMPASSIBLE;
         }
-        else if (this.randomSeed() > 0.5){
-          this.grid[y][x] = OPEN_TILE_WITH_PELLET;
-        }
+        // else if (this.randomSeed() > 0.5){
+        //   this.grid[y][x] = OPEN_TILE_WITH_PELLET;
+        // }
       }
     }
     //spawn box
+    for (let y = centerY - 1; y <= centerY+1; y++){
+      for (let x = centerX - 1; x <= centerX + 1; x++){
+        this.grid[y][x] = OPEN_TILE;
+      }
+    }
+    this.carvePath(0,0);
+    for (let y = 0; y < this.rows; y++){
+      for (let x = 0; x < this.cols; x++){
+        if (this.randomSeed() > 0.75){
+          this.grid[y][x] = OPEN_TILE_WITH_PELLET;
+        }
+        if (this.grid[y][x] !== IMPASSIBLE){
+          this.grid[y][x] = OPEN_TILE_WITH_LARGE_PELLET;
+        }
+      }
+    }
     for (let y = centerY - 1; y <= centerY+1; y++){
       for (let x = centerX - 1; x <= centerX + 1; x++){
         this.grid[y][x] = OPEN_TILE;
@@ -318,7 +355,7 @@ function setup() {
   
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
   maze.generateBaseMaze();
-  player = new thePlayer(Math.round(MAZE_SIZE / 2),Math.round(MAZE_SIZE / 2));
+  player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
   ghostsArray.push(new ghost(0, 0));
   
   imageMode(CENTER);
