@@ -2,8 +2,6 @@
 // Katos Booth
 // November 21st 2024
 
-const GRID_SEED = 327147;
-
 class theMaze {
   constructor(cols, rows, seed){
     this.cols = cols;
@@ -56,23 +54,24 @@ class theMaze {
         // }
       }
     }
-    //spawn box
+
+    //spawn box before path creation
     for (let y = centerY - 1; y <= centerY+1; y++){
       for (let x = centerX - 1; x <= centerX + 1; x++){
         this.grid[y][x] = OPEN_TILE;
       }
     }
+
     this.carvePath(0,0);
     for (let y = 0; y < this.rows; y++){
       for (let x = 0; x < this.cols; x++){
         if (this.randomSeed() > 0.75){
           this.grid[y][x] = OPEN_TILE_WITH_PELLET;
         }
-        if (this.grid[y][x] !== IMPASSIBLE){
-          this.grid[y][x] = OPEN_TILE_WITH_LARGE_PELLET;
-        }
       }
     }
+
+    //spawn box after path creation
     for (let y = centerY - 1; y <= centerY+1; y++){
       for (let x = centerX - 1; x <= centerX + 1; x++){
         this.grid[y][x] = OPEN_TILE;
@@ -93,26 +92,12 @@ class theMaze {
   generateNewChunk(offsetX, offsetY){
     for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
       for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
-        if (y % 2 === 0 || x % 2 === 0){
-          this.grid[y][x] = OPEN_TILE;
-        }
-        if (this.randomSeed() > 0.5){
-          this.grid[y][x] = IMPASSIBLE;
+        if (this.randomSeed() > 0.75){
+          this.grid[y][x] = OPEN_TILE_WITH_PELLET;
         }
       }
     }
-    // for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-    //   const  midX = offsetX + Math.floor(MAZE_SIZE / 2);
-    //   for (let x = offsetX; x < midX; x++){
-    //     this.grid[y][2 * midX - x - 1] = this.grid[y][x];
-    //   }
-    // }
-    // for (let y = offsetY; y < offsetY + MAZE_SIZE; y++){
-    //   this.grid[y][offsetX] = OPEN_TILE;
-    // }
-    // for (let x = offsetX; x < offsetX + MAZE_SIZE; x++){
-    //   this.grid[offsetY][x] = OPEN_TILE;
-    // }
+    this.carvePath(offsetX,offsetY);
   }
   
   //expands the maze depending on direction
@@ -166,11 +151,6 @@ class theMaze {
             stroke(0, 0, 0);
             fill(0, 0, 0);
             image(pelletSprite, screenX+cellSize/2, screenY+cellSize/2, cellSize, cellSize);
-          }
-          else if (this.grid[y][x] === OPEN_TILE_WITH_LARGE_PELLET){
-            stroke(0, 0, 0);
-            fill(0, 0, 0);
-            image(largePelletSprite, screenX+cellSize/2, screenY+cellSize/2, cellSize, cellSize);
           }
           else if (this.grid[y][x] === IMPASSIBLE){
             stroke(0, 0, 255);
@@ -227,14 +207,29 @@ class thePlayer {
 
 class ghost{
   constructor(ghostX, ghostY){
-    this.x = ghostX;
-    this.y = ghostY;
-    this.speed = 0.15;
+    this.movedX = 0;
+    this.movedY = 0;
+    this.x = 0;
+    this.y = 0;
+    this.spawnX = ghostX;
+    this.spawnY = ghostY;
+    this.speed = 1;
   }
   moveGhost(){
     //Base position
+    this.x = -cameraOffsetX + this.movedX + this.spawnX;
+    this.y = -cameraOffsetY + this.movedY + this.spawnY;
     if (ghostMoveState === 1){
-      this.y -= this.speed;
+      this.movedY -= this.speed;
+    }
+    else if (ghostMoveState === 2){
+      this.movedX -= this.speed;
+    }
+    else if (ghostMoveState === 3){
+      this.movedY += this.speed;
+    }
+    else if (ghostMoveState === 4){
+      this.movedX += this.speed;
     }
   }
   displayGhost(){
@@ -259,6 +254,11 @@ class ghost{
       image(rightGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
   }
+  // detectPlayer(){
+  //   if (){
+
+  //   }
+  // }
 }
 
 let maze;
@@ -353,10 +353,10 @@ function setup() {
   
   //creates the spawn position for pac man
   
-  maze = new theMaze(MAZE_SIZE, MAZE_SIZE, GRID_SEED);
+  maze = new theMaze(MAZE_SIZE, MAZE_SIZE, Math.random(0, 32767));
   maze.generateBaseMaze();
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
-  ghostsArray.push(new ghost(0, 0));
+  ghostsArray.push(new ghost(MAZE_SIZE / 2,MAZE_SIZE / 2));
   
   imageMode(CENTER);
 
@@ -396,7 +396,7 @@ function displayGameScreen(){
   player.displayPlayer();
   playerEatsPellet(player.x, player.y);
   ghostsArray[0].displayGhost();
-  ghostsArray[0].moveGhost(-cameraOffsetX, -cameraOffsetY);
+  ghostsArray[0].moveGhost();
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
@@ -417,10 +417,10 @@ function displayMainScreen(){
 
 function checkMazeExpansion(){
   const threshold = 3;
-  if (player.y > maze.rows - threshold){
+  if (player.y > maze.rows/2 - threshold){
     maze.expand("down");
   }
-  if (player.x > maze.cols - threshold){
+  if (player.x > maze.cols/2 - threshold){
     maze.expand("right");
   }
   if (player.x < 0 + threshold){
@@ -465,7 +465,6 @@ function playerEatsPellet(x, y){
 function inputsForGame(){
   if (keyIsDown(38) === true || keyIsDown(87) === true){ //up
     PacManMoveState = 1;
-    ghostMoveState = 1;
   }
   if (keyIsDown(37) === true || keyIsDown(65) === true){ //left
     PacManMoveState = 2;
@@ -487,6 +486,12 @@ function mouseWheel(event){
   }
   else {
     gridSize += 5;
+  }
+  if (gridSize < 10) {
+    gridSize = 10;
+  }
+  if (gridSize > 50) {
+    gridSize = 50;
   }
 }
 
