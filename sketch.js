@@ -207,29 +207,30 @@ class thePlayer {
 
 class ghost{
   constructor(ghostX, ghostY){
-    this.movedX = 0;
-    this.movedY = 0;
+    this.baseX = ghostX;
+    this.baseY = ghostY;
     this.x = 0;
     this.y = 0;
-    this.spawnX = ghostX;
-    this.spawnY = ghostY;
-    this.speed = 1;
+    this.ghostGridX = 0;
+    this.ghostGridY = 0;
+    this.speed = 0.15;
   }
   moveGhost(){
     //Base position
-    this.x = -cameraOffsetX + this.movedX + this.spawnX;
-    this.y = -cameraOffsetY + this.movedY + this.spawnY;
+    this.x = this.baseX * cellSize - cameraOffsetX;
+    this.y = this.baseY * cellSize - cameraOffsetY;
+    this.ghostGridX = this.x + cameraOffsetX;
     if (ghostMoveState === 1){
-      this.movedY -= this.speed;
+      this.x -= this.speed;
     }
     else if (ghostMoveState === 2){
-      this.movedX -= this.speed;
+      this.y -= this.speed;
     }
     else if (ghostMoveState === 3){
-      this.movedY += this.speed;
+      this.y += this.speed;
     }
     else if (ghostMoveState === 4){
-      this.movedX += this.speed;
+      this.x += this.speed;
     }
   }
   displayGhost(){
@@ -254,11 +255,11 @@ class ghost{
       image(rightGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
   }
-  // detectPlayer(){
-  //   if (){
-
-  //   }
-  // }
+  detectPlayer(){
+    if (player.y > this.y){
+      ghostMoveState === 3;
+    }
+  }
 }
 
 let maze;
@@ -356,7 +357,7 @@ function setup() {
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, Math.random(0, 32767));
   maze.generateBaseMaze();
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
-  ghostsArray.push(new ghost(MAZE_SIZE / 2,MAZE_SIZE / 2));
+  ghostsArray.push(new ghost(MAZE_SIZE / 2, MAZE_SIZE / 2));
   
   imageMode(CENTER);
 
@@ -397,6 +398,7 @@ function displayGameScreen(){
   playerEatsPellet(player.x, player.y);
   ghostsArray[0].displayGhost();
   ghostsArray[0].moveGhost();
+  ghostsArray[0].detectPlayer();
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
