@@ -214,23 +214,29 @@ class ghost{
     this.ghostGridX = 0;
     this.ghostGridY = 0;
     this.speed = 0.15;
+    this.playerX = 0;
+    this.playerY = 0;
+  }
+  detectPlayer(){
   }
   moveGhost(){
     //Base position
     this.x = this.baseX * cellSize - cameraOffsetX;
     this.y = this.baseY * cellSize - cameraOffsetY;
-    this.ghostGridX = this.x + cameraOffsetX;
+    this.ghostGridX = this.baseX;
+    this.ghostGridY = this.baseY;
+
     if (ghostMoveState === 1){
-      this.x -= this.speed;
+      this.ghostGridX -= this.speed;
     }
     else if (ghostMoveState === 2){
-      this.y -= this.speed;
+      this.ghostGridY -= this.speed;
     }
     else if (ghostMoveState === 3){
-      this.y += this.speed;
+      this.ghostGridY += this.speed;
     }
     else if (ghostMoveState === 4){
-      this.x += this.speed;
+      this.ghostGridX += this.speed;
     }
   }
   displayGhost(){
@@ -253,11 +259,6 @@ class ghost{
     else if (ghostMoveState === 4){
       image(rightGhostSprite, this.x, this.y, cellSize, cellSize);
       image(rightGhostEyesSprite, this.x, this.y, cellSize, cellSize);
-    }
-  }
-  detectPlayer(){
-    if (player.y > this.y){
-      ghostMoveState === 3;
     }
   }
 }
@@ -398,7 +399,6 @@ function displayGameScreen(){
   playerEatsPellet(player.x, player.y);
   ghostsArray[0].displayGhost();
   ghostsArray[0].moveGhost();
-  ghostsArray[0].detectPlayer();
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
