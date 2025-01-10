@@ -209,54 +209,101 @@ class ghost{
   constructor(ghostX, ghostY){
     this.baseX = ghostX;
     this.baseY = ghostY;
-    this.x = 0;
-    this.y = 0;
-    this.ghostGridX = 0;
-    this.ghostGridY = 0;
+    this.x = ghostX;
+    this.y = ghostY;
     this.speed = 0.15;
-    this.playerX = 0;
-    this.playerY = 0;
+    this.ghostMoveState = 0;
   }
-  detectPlayer(){
+  canMoveTo(nx, ny){
+    return (
+      nx >= 0 &&
+      ny >= 0 &&
+      nx < maze.cols &&
+      ny < maze.rows &&
+      maze.grid[Math.round(ny)][Math.round(nx)] !== IMPASSIBLE
+    );
   }
-  moveGhost(){
+  moveGhost(playerX, playerY){
+    const dx = playerX - this.x;
+    const dy = playerY - this.y;
+
+    let targetDirection = { x: 0, y: 0 };
+
+    if (Math.abs(dx) > Math.abs(dy)){
+      targetDirection.x = Math.sign(dy);
+    }
+    else {
+      targetDirection.y = Math.sign(dy);
+    }
+
+    if (this.canMoveTo(this.x + targetDirection.x, this.y + targetDirection.y)){
+      this.x += targetDirection.x * this.speed;
+      this.y += targetDirection.y * this.speed;
+      if (targetDirection.x > 0) {
+        this.ghostMoveState = 4;
+      }
+      else if (targetDirection.x < 0){
+        this.ghostMoveState = 2;
+      }
+      else if (targetDirection.y > 0){
+        this.ghostMoveState = 3;
+      }
+      else if (targetDirection.y < 0){
+        this.ghostMoveState = 1;
+      }
+      else {
+        const directions = [
+          {dx: 0, dy: -1, state: 1 },//up
+          {dx: 0, dy: 1, state: 2 },//down
+          {dx: 1, dy: 0, state: 3 },//right
+          {dx: -1, dy: 0, state: 4 },//left
+        ];
+        for (let dir of directions){
+          if (this.canMoveTo(this.x + dir.x, this.y +  dir.y)){
+            this.x += dir.x * this.speed;
+            this.y += dir.y * this.speed;
+            this.ghostMoveState = dir.state;
+            break;
+          }
+        }
+      }
+    }
+
     //Base position
     this.x = this.baseX * cellSize - cameraOffsetX;
     this.y = this.baseY * cellSize - cameraOffsetY;
-    this.ghostGridX = this.baseX;
-    this.ghostGridY = this.baseY;
 
     if (ghostMoveState === 1){
-      this.ghostGridX -= this.speed;
+      this.x -= this.speed;
     }
     else if (ghostMoveState === 2){
-      this.ghostGridY -= this.speed;
+      this.y -= this.speed;
     }
     else if (ghostMoveState === 3){
-      this.ghostGridY += this.speed;
+      this.y += this.speed;
     }
     else if (ghostMoveState === 4){
-      this.ghostGridX += this.speed;
+      this.x += this.speed;
     }
   }
   displayGhost(){
-    if (ghostMoveState === 0){
+    if (this.ghostMoveState === 0){
       image(defaultGhostSprite, this.x, this.y, cellSize, cellSize);
       image(defaultGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
-    else if (ghostMoveState === 1){
+    else if (this.ghostMoveState === 1){
       image(upGhostSprite, this.x, this.y, cellSize, cellSize);
       image(upGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
-    else if (ghostMoveState === 2){
+    else if (this.ghostMoveState === 2){
       image(leftGhostSprite, this.x, this.y, cellSize, cellSize);
       image(leftGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
-    else if (ghostMoveState === 3){
+    else if (this.ghostMoveState === 3){
       image(downGhostSprite, this.x, this.y, cellSize, cellSize);
       image(downGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
-    else if (ghostMoveState === 4){
+    else if (this.ghostMoveState === 4){
       image(rightGhostSprite, this.x, this.y, cellSize, cellSize);
       image(rightGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
@@ -353,8 +400,6 @@ function setup() {
   //makes cellSize scale to the height of the screen
   cellSize = height/gridSize;
   
-  //creates the spawn position for pac man
-  
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, Math.random(0, 32767));
   maze.generateBaseMaze();
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
@@ -394,19 +439,25 @@ function screenController(){
 function displayGameScreen(){
   background(0);
   maze.display(cameraOffsetX, cameraOffsetY);
+
   player.movePlayer();
   player.displayPlayer();
   playerEatsPellet(player.x, player.y);
+
+  ghostsArray[0].moveGhost(player.x, player.y);
   ghostsArray[0].displayGhost();
-  ghostsArray[0].moveGhost();
+
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
+
   fill(255);
   textAlign(LEFT);
   textSize(20);
   text(score, 0, 20);
+
   checkMazeExpansion();
+
   touchInputs();
 }
 
