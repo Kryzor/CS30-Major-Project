@@ -211,7 +211,7 @@ class ghost{
     this.baseY = ghostY;
     this.x = ghostX;
     this.y = ghostY;
-    this.speed = 0.15;
+    this.speed = 0.1;
     this.ghostMoveState = 0;
   }
   canMoveTo(nx, ny){
@@ -219,37 +219,49 @@ class ghost{
       nx >= 0 &&
       ny >= 0 &&
       nx < maze.cols &&
-      ny < maze.rows &&
-      maze.grid[Math.round(ny)][Math.round(nx)] !== IMPASSIBLE
+      ny < maze.rows
     );
   }
   moveGhost(playerX, playerY){
-    const dx = playerX - this.x;
-    const dy = playerY - this.y;
+    const dx = playerX - this.baseX;
+    const dy = playerY - this.baseY;
 
     let targetDirection = { x: 0, y: 0 };
 
+    
     if (Math.abs(dx) > Math.abs(dy)){
-      targetDirection.x = Math.sign(dy);
+      targetDirection.x = Math.sign(dx);
     }
     else {
       targetDirection.y = Math.sign(dy);
     }
 
-    if (this.canMoveTo(this.x + targetDirection.x, this.y + targetDirection.y)){
-      this.x += targetDirection.x * this.speed;
-      this.y += targetDirection.y * this.speed;
-      if (targetDirection.x > 0) {
-        this.ghostMoveState = 4;
+    if (this.canMoveTo(this.baseX + targetDirection.x, this.baseY + targetDirection.y)){
+      if (this.ghostMoveState === 1){ //up
+        this.baseY -= this.speed;
       }
-      else if (targetDirection.x < 0){
-        this.ghostMoveState = 2;
+      else if (this.ghostMoveState === 2){ //left
+        this.baseX -= this.speed;
+      }
+      else if (this.ghostMoveState === 3){ //down
+        this.baseY += this.speed;
+      }
+      else if (this.ghostMoveState === 4){ //right
+        this.baseX += this.speed;
+      }
+
+      
+      if (targetDirection.y < 0) {
+        this.ghostMoveState = 1;
       }
       else if (targetDirection.y > 0){
         this.ghostMoveState = 3;
       }
-      else if (targetDirection.y < 0){
-        this.ghostMoveState = 1;
+      else if (targetDirection.x < 0){
+        this.ghostMoveState = 2;
+      }
+      else if (targetDirection.x > 0){
+        this.ghostMoveState = 4;
       }
       else {
         const directions = [
@@ -259,12 +271,18 @@ class ghost{
           {dx: -1, dy: 0, state: 4 },//left
         ];
         for (let dir of directions){
-          if (this.canMoveTo(this.x + dir.x, this.y +  dir.y)){
-            this.x += dir.x * this.speed;
-            this.y += dir.y * this.speed;
+          if (this.canMoveTo(this.baseX + dir.x, this.baseY + dir.y)){
             this.ghostMoveState = dir.state;
             break;
           }
+        }
+      }
+      if (maze.grid[Math.round(this.baseY) - 1][Math.round(this.baseX-0.5)] === IMPASSIBLE){ //up
+        if (targetDirection.x < 0){
+          this.ghostMoveState = 2;
+        }
+        else {
+          this.ghostMoveState = 4;
         }
       }
     }
@@ -444,8 +462,10 @@ function displayGameScreen(){
   player.displayPlayer();
   playerEatsPellet(player.x, player.y);
 
-  ghostsArray[0].moveGhost(player.x, player.y);
-  ghostsArray[0].displayGhost();
+  for (let ghost of ghostsArray){
+    ghost.moveGhost(player.x, player.y);
+    ghost.displayGhost();
+  }
 
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
