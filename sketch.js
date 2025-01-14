@@ -203,6 +203,10 @@ class thePlayer {
       image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
     }
   }
+  death(){
+    storeItem('end_score', score);
+    PacManMoveState = 0;
+  }
 }
 
 class ghost{
@@ -211,7 +215,7 @@ class ghost{
     this.baseY = ghostY;
     this.x = ghostX;
     this.y = ghostY;
-    this.speed = 0.1;
+    this.speed = 0.15;
     this.ghostMoveState = 0;
   }
   canMoveTo(nx, ny){
@@ -267,8 +271,8 @@ class ghost{
         const directions = [
           {dx: 0, dy: -1, state: 1 },//up
           {dx: 0, dy: 1, state: 2 },//down
-          {dx: 1, dy: 0, state: 3 },//right
-          {dx: -1, dy: 0, state: 4 },//left
+          {dx: -1, dy: 0, state: 3 },//left
+          {dx: 1, dy: 0, state: 4 },//right
         ];
         for (let dir of directions){
           if (this.canMoveTo(this.baseX + dir.x, this.baseY + dir.y)){
@@ -277,13 +281,16 @@ class ghost{
           }
         }
       }
-      if (maze.grid[Math.round(this.baseY) - 1][Math.round(this.baseX-0.5)] === IMPASSIBLE){ //up
-        if (targetDirection.x < 0){
-          this.ghostMoveState = 2;
-        }
-        else {
-          this.ghostMoveState = 4;
-        }
+      // if (maze.grid[Math.round(this.baseY)][Math.round(this.baseX)-1] === IMPASSIBLE ||  maze.grid[Math.round(this.baseY)-1][Math.round(this.baseX)] === IMPASSIBLE){ //up
+      //   if (targetDirection.x > 0){
+      //     this.ghostMoveState = 4;
+      //   }
+      //   else {
+      //     this.ghostMoveState = 2;
+      //   }
+      // }
+      if (Math.round(this.baseX) === Math.round(playerX) && Math.round(this.baseY) === Math.round(playerY)) {
+        player.death();
       }
     }
 
@@ -331,6 +338,8 @@ class ghost{
 let maze;
 let cellSize;
 
+let score = 0;
+
 const MAZE_SIZE = 25;
 
 //visual grid size for the amount of blocks will be seen on screen
@@ -342,8 +351,6 @@ let displayGridY;
 
 //freeze variable for when the game pauses or when the player kills a ghost
 let freezeGame = 0;
-
-let score = 0;
 
 //grid states
 const OPEN_TILE = 0;
@@ -386,6 +393,8 @@ let leftGhostEyesSprite;
 //the state for the screen
 let screenState = 1;
 
+let high_score = 0;
+
 function preload(){
   //loads the sprites
   defaultPacManSprite = loadImage("images/pacman/pacman-default.png"); 
@@ -410,6 +419,7 @@ function preload(){
 }
 
 function setup() {
+  high_score = getItem('end_score');
   frameRate(60);
   
   //creates the screen
@@ -421,7 +431,7 @@ function setup() {
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, Math.random(0, 32767));
   maze.generateBaseMaze();
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
-  ghostsArray.push(new ghost(MAZE_SIZE / 2, MAZE_SIZE / 2));
+  ghostsArray.push(new ghost(MAZE_SIZE / 2 - 5, MAZE_SIZE / 2));
   
   imageMode(CENTER);
 
@@ -474,7 +484,9 @@ function displayGameScreen(){
   fill(255);
   textAlign(LEFT);
   textSize(20);
+
   text(score, 0, 20);
+  text(high_score, 0, 40);
 
   checkMazeExpansion();
 
@@ -531,6 +543,9 @@ function playerEatsPellet(x, y){
   else if(maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] === OPEN_TILE_WITH_LARGE_PELLET){
     score += 1000000;
     maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] = OPEN_TILE;
+  }
+  if (score > high_score){
+    high_score = score;
   }
 }
 
