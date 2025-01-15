@@ -184,9 +184,14 @@ class thePlayer {
       this.x += this.speed;
     }
     inputsForGame();
+    touchInputs();
   }
   
   displayPlayer(){
+    upPacManSprite.delay(10);
+    rightPacManSprite.delay(10);
+    downPacManSprite.delay(10);
+    leftPacManSprite.delay(10);
     if (PacManMoveState === 0){
       image(defaultPacManSprite, width / 2, height / 2, cellSize, cellSize);
     }
@@ -205,7 +210,17 @@ class thePlayer {
   }
   death(){
     storeItem('end_score', score);
-    PacManMoveState = 0;
+    freezeGame = 1;
+
+    upPacManSprite.pause();
+    leftPacManSprite.pause();
+    rightPacManSprite.pause();
+    downPacManSprite.pause();
+
+    upGhostSprite.pause();
+    leftGhostSprite.pause();
+    rightGhostSprite.pause();
+    downGhostSprite.pause();
   }
 }
 
@@ -215,8 +230,13 @@ class ghost{
     this.baseY = ghostY;
     this.x = ghostX;
     this.y = ghostY;
-    this.speed = 0.15;
+    this.speed = 0.1;
     this.ghostMoveState = 0;
+    this.colour = {
+      r : 255,
+      g : 0,
+      b : 0
+    };
   }
   canMoveTo(nx, ny){
     return (
@@ -281,14 +301,28 @@ class ghost{
           }
         }
       }
-      // if (maze.grid[Math.round(this.baseY)][Math.round(this.baseX)-1] === IMPASSIBLE ||  maze.grid[Math.round(this.baseY)-1][Math.round(this.baseX)] === IMPASSIBLE){ //up
-      //   if (targetDirection.x > 0){
-      //     this.ghostMoveState = 4;
-      //   }
-      //   else {
-      //     this.ghostMoveState = 2;
-      //   }
-      // }
+      if (maze.grid[Math.round(this.baseY-0.5)][Math.round(this.baseX)-1] === IMPASSIBLE ||  maze.grid[Math.round(this.baseY)-1][Math.round(this.baseX)] === IMPASSIBLE){ //up
+        if (dy > 0){
+          this.ghostMoveState = 1;
+        }
+        else if (dy < 0) {
+          this.ghostMoveState = 3;
+        }
+        else {
+          this.ghostMoveState = 4;
+        }
+      }
+      if (maze.grid[Math.round(this.baseY)][Math.round(this.baseX-0.5)] === IMPASSIBLE ||  maze.grid[Math.round(this.baseY)-1][Math.round(this.baseX)] === IMPASSIBLE){ //up
+        if (dx > 0){
+          this.ghostMoveState = 2;
+        }
+        else if (dx < 0) {
+          this.ghostMoveState = 4;
+        }
+        else {
+          this.ghostMoveState = 1;
+        }
+      }
       if (Math.round(this.baseX) === Math.round(playerX) && Math.round(this.baseY) === Math.round(playerY)) {
         player.death();
       }
@@ -313,24 +347,48 @@ class ghost{
   }
   displayGhost(){
     if (this.ghostMoveState === 0){
+      tint(this.colour.r, this.colour.g, this.colour.b);
       image(defaultGhostSprite, this.x, this.y, cellSize, cellSize);
+      noTint();
       image(defaultGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
     else if (this.ghostMoveState === 1){
+      tint(this.colour.r, this.colour.g, this.colour.b);
       image(upGhostSprite, this.x, this.y, cellSize, cellSize);
+      noTint();
       image(upGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
     else if (this.ghostMoveState === 2){
+      tint(this.colour.r, this.colour.g, this.colour.b);
       image(leftGhostSprite, this.x, this.y, cellSize, cellSize);
+      noTint();
       image(leftGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
     else if (this.ghostMoveState === 3){
+      tint(this.colour.r, this.colour.g, this.colour.b);
       image(downGhostSprite, this.x, this.y, cellSize, cellSize);
+      noTint();
       image(downGhostEyesSprite, this.x, this.y, cellSize, cellSize);
     }
     else if (this.ghostMoveState === 4){
+      tint(this.colour.r, this.colour.g, this.colour.b);
       image(rightGhostSprite, this.x, this.y, cellSize, cellSize);
+      noTint();
       image(rightGhostEyesSprite, this.x, this.y, cellSize, cellSize);
+    }
+  }
+  gridCollision() {
+    if (maze.grid[Math.round(y)-1][Math.round(x - 0.45)] === IMPASSIBLE){ //up
+      this.baseY = Math.round(this.baseY)+0.5;
+    }
+    if (maze.grid[Math.round(y)][Math.round(x - 0.45)] === IMPASSIBLE){ //down
+      this.baseY = Math.round(this.baseY)-0.5;
+    }
+    if (maze.grid[Math.round(y - 0.45)][Math.round(x)-1] === IMPASSIBLE){ //left
+      this.baseX = Math.round(this.baseX)+0.5;
+    }
+    if (maze.grid[Math.round(y - 0.45)][Math.round(x)] === IMPASSIBLE){ //right
+      this.baseX = Math.round(this.baseX)-0.5;
     }
   }
 }
@@ -430,8 +488,10 @@ function setup() {
   
   maze = new theMaze(MAZE_SIZE, MAZE_SIZE, Math.random(0, 32767));
   maze.generateBaseMaze();
+
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
-  ghostsArray.push(new ghost(MAZE_SIZE / 2 - 5, MAZE_SIZE / 2));
+
+  ghostsArray.push(new ghost(MAZE_SIZE / 2 + 5, MAZE_SIZE / 2));
   
   imageMode(CENTER);
 
@@ -468,29 +528,32 @@ function displayGameScreen(){
   background(0);
   maze.display(cameraOffsetX, cameraOffsetY);
 
-  player.movePlayer();
+  if (freezeGame !== 1){
+    player.movePlayer();
+    playerEatsPellet(player.x, player.y);
+  }
   player.displayPlayer();
-  playerEatsPellet(player.x, player.y);
 
   for (let ghost of ghostsArray){
-    ghost.moveGhost(player.x, player.y);
+    if (freezeGame !== 1){
+      ghost.moveGhost(player.x, player.y);
+    }
     ghost.displayGhost();
   }
+
 
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
 
+  //text displaying score and high score
   fill(255);
   textAlign(LEFT);
   textSize(20);
-
   text(score, 0, 20);
   text(high_score, 0, 40);
 
   checkMazeExpansion();
-
-  touchInputs();
 }
 
 //Displays the main screen
