@@ -208,7 +208,11 @@ class thePlayer {
       image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
     }
   }
+  deathParticles(){
+    particlesArray.push(new squareParticle(MAZE_SIZE / 2, MAZE_SIZE / 2));
+  }
   death(){
+    this.deathParticles();
     storeItem('end_score', score);
     freezeGame = 1;
 
@@ -301,30 +305,9 @@ class ghost{
           }
         }
       }
-      if (maze.grid[Math.round(this.baseY-0.5)][Math.round(this.baseX)-1] === IMPASSIBLE ||  maze.grid[Math.round(this.baseY)-1][Math.round(this.baseX)] === IMPASSIBLE){ //up
-        if (dy > 0){
-          this.ghostMoveState = 1;
-        }
-        else if (dy < 0) {
-          this.ghostMoveState = 3;
-        }
-        else {
-          this.ghostMoveState = 4;
-        }
-      }
-      if (maze.grid[Math.round(this.baseY)][Math.round(this.baseX-0.5)] === IMPASSIBLE ||  maze.grid[Math.round(this.baseY)-1][Math.round(this.baseX)] === IMPASSIBLE){ //up
-        if (dx > 0){
-          this.ghostMoveState = 2;
-        }
-        else if (dx < 0) {
-          this.ghostMoveState = 4;
-        }
-        else {
-          this.ghostMoveState = 1;
-        }
-      }
       if (Math.round(this.baseX) === Math.round(playerX) && Math.round(this.baseY) === Math.round(playerY)) {
         player.death();
+        player.deathParticles();
       }
     }
 
@@ -393,6 +376,33 @@ class ghost{
   }
 }
 
+class squareParticle{
+  constructor(particleX, particleY){
+    this.baseX = particleX;
+    this.baseY = particleY;
+    this.x = 0;
+    this.y = 0;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.gravitationalPull = 1.0;
+    this.friction = 1.0;
+    this.bounce = 100;
+    this.size = 0;
+  }
+  displayParticle(){
+    this.size = cellSize/13;
+    noStroke();
+    fill(127);
+    square(this.x, this.y, this.size);
+    this.moveParticl();
+  }
+  moveParticl(){
+    this.velocityY += this.velocityY + this.gravitationalPull;
+    this.x = this.baseX * cellSize - cameraOffsetX + this.velocityX;
+    this.y = this.baseY * cellSize - cameraOffsetX + this.velocityY;
+  }
+}
+
 let maze;
 let cellSize;
 
@@ -406,6 +416,8 @@ let gridSize = MAZE_SIZE;
 //Display grid size variables
 let displayGridX;
 let displayGridY;
+
+let particlesArray = [];
 
 //freeze variable for when the game pauses or when the player kills a ghost
 let freezeGame = 0;
@@ -554,6 +566,9 @@ function displayGameScreen(){
   text(high_score, 0, 40);
 
   checkMazeExpansion();
+  for (let particle of particlesArray){
+    particle.displayParticle();
+  }
 }
 
 //Displays the main screen
