@@ -209,7 +209,13 @@ class thePlayer {
     }
   }
   deathParticles(){
-    particlesArray.push(new squareParticle(MAZE_SIZE / 2, MAZE_SIZE / 2));
+    let colour = 0;
+    for (let x = 0; x < 13; x++){
+      for (let y = 0; y < 13; y++){
+        colour = defaultPacManSprite.get(x, y);
+        particlesArray.push(new squareParticle(this.x + x/13 - 1/2, this.y + y/13 - 1/2, colour));
+      }
+    }
   }
   death(){
     this.deathParticles();
@@ -377,29 +383,45 @@ class ghost{
 }
 
 class squareParticle{
-  constructor(particleX, particleY){
+  constructor(particleX, particleY, colour){
     this.baseX = particleX;
     this.baseY = particleY;
+    this.movedX = 0;
+    this.movedY = 0;
     this.x = 0;
     this.y = 0;
-    this.velocityX = 0;
-    this.velocityY = 0;
-    this.gravitationalPull = 1.0;
-    this.friction = 1.0;
-    this.bounce = 100;
+    this.velocityX = Math.random(-5, 5);
+    this.velocityY = Math.random(-5, 5);
+    this.gravitationalPull = 0.1;
+    this.friction = 1;
+    this.bounce = 0.5;
     this.size = 0;
+    this.colour = colour;
   }
   displayParticle(){
+    this.x = this.baseX * cellSize - cameraOffsetX + this.movedX;
+    this.y = this.baseY * cellSize - cameraOffsetY + this.movedY;
     this.size = cellSize/13;
     noStroke();
-    fill(127);
+    fill(this.colour);
     square(this.x, this.y, this.size);
-    this.moveParticl();
   }
-  moveParticl(){
-    this.velocityY += this.velocityY + this.gravitationalPull;
-    this.x = this.baseX * cellSize - cameraOffsetX + this.velocityX;
-    this.y = this.baseY * cellSize - cameraOffsetX + this.velocityY;
+  moveParticle(){
+    if (this.y + this.size >= height){
+      this.movedY = height;
+      this.velocityY *= -this.bounce;
+    }
+    else {
+      this.velocityY += this.gravitationalPull;
+    }
+    if (this.x >= width){
+      this.velocityX *= -this.bounce;
+    }
+    if (this.x <= 0){
+      this.velocityX *= -this.bounce;
+    }
+    this.movedY += this.velocityY;
+    this.movedX += this.velocityX;
   }
 }
 
@@ -503,7 +525,7 @@ function setup() {
 
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
 
-  ghostsArray.push(new ghost(MAZE_SIZE / 2 + 5, MAZE_SIZE / 2));
+  ghostsArray.push(new ghost(MAZE_SIZE / 2, MAZE_SIZE / 2));
   
   imageMode(CENTER);
 
@@ -543,8 +565,8 @@ function displayGameScreen(){
   if (freezeGame !== 1){
     player.movePlayer();
     playerEatsPellet(player.x, player.y);
+    player.displayPlayer();
   }
-  player.displayPlayer();
 
   for (let ghost of ghostsArray){
     if (freezeGame !== 1){
@@ -568,6 +590,7 @@ function displayGameScreen(){
   checkMazeExpansion();
   for (let particle of particlesArray){
     particle.displayParticle();
+    particle.moveParticle();
   }
 }
 
