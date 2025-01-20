@@ -210,10 +210,11 @@ class thePlayer {
   }
   deathParticles(){
     let colour = 0;
+    gridSize = 10;
     for (let x = 0; x < 13; x++){
       for (let y = 0; y < 13; y++){
         colour = defaultPacManSprite.get(x, y);
-        particlesArray.push(new squareParticle(this.x + x/13 - 1/2, this.y + y/13 - 1/2, colour));
+        particlesArray.push(new squareParticle(this.x + x/13 - 1/2, this.y + y/13 - 1/2, colour, Math.random(-2, 2), Math.random(-2, 2)));
       }
     }
   }
@@ -383,45 +384,38 @@ class ghost{
 }
 
 class squareParticle{
-  constructor(particleX, particleY, colour){
+  constructor(particleX, particleY, colour, velocityX, velocityY){
     this.baseX = particleX;
     this.baseY = particleY;
     this.movedX = 0;
     this.movedY = 0;
     this.x = 0;
     this.y = 0;
-    this.velocityX = Math.random(-5, 5);
-    this.velocityY = Math.random(-5, 5);
+    this.velocityX = velocityX;
+    this.velocityY = velocityY;
     this.gravitationalPull = 0.1;
-    this.friction = 1;
-    this.bounce = 0.5;
+    this.friction = 0.5;
+    this.bounce = 0.45;
     this.size = 0;
     this.colour = colour;
   }
   displayParticle(){
-    this.x = this.baseX * cellSize - cameraOffsetX + this.movedX;
-    this.y = this.baseY * cellSize - cameraOffsetY + this.movedY;
     this.size = cellSize/13;
     noStroke();
     fill(this.colour);
     square(this.x, this.y, this.size);
   }
   moveParticle(){
-    if (this.y + this.size >= height){
-      this.movedY = height;
-      this.velocityY *= -this.bounce;
-    }
-    else {
-      this.velocityY += this.gravitationalPull;
-    }
-    if (this.x >= width){
-      this.velocityX *= -this.bounce;
-    }
-    if (this.x <= 0){
-      this.velocityX *= -this.bounce;
-    }
     this.movedY += this.velocityY;
     this.movedX += this.velocityX;
+    this.x = this.baseX * cellSize - cameraOffsetX + this.movedX;
+    this.y = this.baseY * cellSize - cameraOffsetY + this.movedY;
+    this.velocityY += this.gravitationalPull;
+    if (this.y + this.size >= height){
+      this.velocityY *= -this.bounce;
+      this.velocityX *= this.friction;
+      this.y = height - this.size;
+    }
   }
 }
 
@@ -430,6 +424,7 @@ let cellSize;
 
 let score = 0;
 
+//amount of squares that the grid generates
 const MAZE_SIZE = 25;
 
 //visual grid size for the amount of blocks will be seen on screen
@@ -525,7 +520,7 @@ function setup() {
 
   player = new thePlayer(MAZE_SIZE / 2,MAZE_SIZE / 2);
 
-  ghostsArray.push(new ghost(MAZE_SIZE / 2, MAZE_SIZE / 2));
+  ghostsArray.push(new ghost(0, 0));
   
   imageMode(CENTER);
 
@@ -566,6 +561,7 @@ function displayGameScreen(){
     player.movePlayer();
     playerEatsPellet(player.x, player.y);
     player.displayPlayer();
+    playerGridCollision(player.x, player.y);
   }
 
   for (let ghost of ghostsArray){
@@ -584,8 +580,9 @@ function displayGameScreen(){
   fill(255);
   textAlign(LEFT);
   textSize(20);
-  text(score, 0, 20);
-  text(high_score, 0, 40);
+  text(`Score: ${score}`, 0, 20);
+  textAlign(RIGHT);
+  text(`High score: ${high_score}`, width, 20);
 
   checkMazeExpansion();
   for (let particle of particlesArray){
@@ -608,9 +605,6 @@ function checkMazeExpansion(){
   }
   if (player.x > maze.cols/2 - threshold){
     maze.expand("right");
-  }
-  if (player.x < 0 + threshold){
-    maze.expand("left");
   }
 }
 
@@ -663,9 +657,6 @@ function inputsForGame(){
   }
   if (keyIsDown(39) === true || keyIsDown(68) === true){ //right
     PacManMoveState = 4;
-  }
-  if (keyIsDown(67) === true){ //disable collision
-    playerGridCollision(player.x, player.y);
   }
 }
 
