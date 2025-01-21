@@ -8,7 +8,7 @@ Building a endless game of pacman that infinitely generates the maze
 
 ## Need to have
 - Actual infinite generation
-- Ghosts that use AI to move to the player
+- Ghosts that path find to move to the player
 - Pellets and bigger pellets for eating ghosts
 - Animated sprites for pacman and ghosts
 - Score counter

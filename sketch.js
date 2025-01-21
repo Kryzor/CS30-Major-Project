@@ -2,6 +2,7 @@
 // Katos Booth
 // November 21st 2024
 
+//the actual maze
 class theMaze {
   constructor(cols, rows, seed){
     this.cols = cols;
@@ -163,6 +164,7 @@ class theMaze {
   }
 }
 
+//the thing you control
 class thePlayer {
   constructor(playerX, playerY){
     this.x = playerX;
@@ -170,6 +172,7 @@ class thePlayer {
     this.speed = 0.15;
   }
   
+  //moves player
   movePlayer(){
     if (PacManMoveState === 1){ //up
       this.y -= this.speed;
@@ -187,6 +190,7 @@ class thePlayer {
     touchInputs();
   }
   
+  //displays player 
   displayPlayer(){
     upPacManSprite.delay(10);
     rightPacManSprite.delay(10);
@@ -208,16 +212,22 @@ class thePlayer {
       image(rightPacManSprite, width / 2, height / 2, cellSize, cellSize);
     }
   }
+
+  //called to create the particles of the players death from the default sprite
   deathParticles(){
     let colour = 0;
+    let velocityX = 0;
     gridSize = 10;
     for (let x = 0; x < 13; x++){
       for (let y = 0; y < 13; y++){
+        velocityX = Math.random(-2,2);
         colour = defaultPacManSprite.get(x, y);
-        particlesArray.push(new squareParticle(this.x + x/13 - 1/2, this.y + y/13 - 1/2, colour, Math.random(-2, 2), Math.random(-2, 2)));
+        particlesArray.push(new squareParticle(this.x + x/13 - 1/2, this.y + y/13 - 1/2, colour));
       }
     }
   }
+
+  //whats called when the player dies
   death(){
     this.deathParticles();
     storeItem('end_score', score);
@@ -235,6 +245,7 @@ class thePlayer {
   }
 }
 
+//the ghost that chases the player around
 class ghost{
   constructor(ghostX, ghostY){
     this.baseX = ghostX;
@@ -383,38 +394,45 @@ class ghost{
   }
 }
 
+//The particles used for the players death
 class squareParticle{
-  constructor(particleX, particleY, colour, velocityX, velocityY){
+  constructor(particleX, particleY, colour){
     this.baseX = particleX;
     this.baseY = particleY;
     this.movedX = 0;
     this.movedY = 0;
     this.x = 0;
     this.y = 0;
-    this.velocityX = velocityX;
-    this.velocityY = velocityY;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.velocityX = Math.random(-2,2);
+    this.velocityY = Math.random(-2,2);
     this.gravitationalPull = 0.1;
     this.friction = 0.5;
     this.bounce = 0.45;
     this.size = 0;
     this.colour = colour;
   }
+
+  //displays particle
   displayParticle(){
     this.size = cellSize/13;
     noStroke();
     fill(this.colour);
     square(this.x, this.y, this.size);
   }
+
+  //moves particle
   moveParticle(){
-    this.movedY += this.velocityY;
-    this.movedX += this.velocityX;
-    this.x = this.baseX * cellSize - cameraOffsetX + this.movedX;
-    this.y = this.baseY * cellSize - cameraOffsetY + this.movedY;
     this.velocityY += this.gravitationalPull;
+    this.movedX += this.velocityX;
+    this.x = this.movedX + this.baseX * cellSize - cameraOffsetX;
+    this.movedY += this.velocityY;
+    this.y = this.movedY + this.baseY * cellSize - cameraOffsetY;
     if (this.y + this.size >= height){
+      this.y = height - this.size;
       this.velocityY *= -this.bounce;
       this.velocityX *= this.friction;
-      this.y = height - this.size;
     }
   }
 }
@@ -422,6 +440,7 @@ class squareParticle{
 let maze;
 let cellSize;
 
+//the current session for score
 let score = 0;
 
 //amount of squares that the grid generates
@@ -434,6 +453,7 @@ let gridSize = MAZE_SIZE;
 let displayGridX;
 let displayGridY;
 
+//whatholds all the particles
 let particlesArray = [];
 
 //freeze variable for when the game pauses or when the player kills a ghost
@@ -445,32 +465,42 @@ const IMPASSIBLE = 1;
 const OPEN_TILE_WITH_PELLET = 2;
 const OPEN_TILE_WITH_LARGE_PELLET = 3;
 
+//what offsets the maze
 let cameraOffsetX = 0;
 let cameraOffsetY = 0;
   
+//the player
 let player;
   
+//what holds all the ghosts
 let ghostsArray = [];
 
 //the state for the players movement
 let PacManMoveState = 0;
+
+//state for ghosts movement
 let ghostMoveState = 0;
 let ghostState = 0;
 
+//pacman sprites
 let defaultPacManSprite;
 let rightPacManSprite;
 let downPacManSprite;
 let leftPacManSprite;
 let upPacManSprite;
 
+//pellet sprites
 let pelletSprite;
 let largePelletSprite;
 
+//ghosts sprites
 let defaultGhostSprite;
 let upGhostSprite;
 let rightGhostSprite;
 let downGhostSprite;
 let leftGhostSprite;
+
+//eye sprites
 let defaultGhostEyesSprite;
 let upGhostEyesSprite;
 let rightGhostEyesSprite;
@@ -480,10 +510,11 @@ let leftGhostEyesSprite;
 //the state for the screen
 let screenState = 1;
 
+//high score count
 let high_score = 0;
 
+//loads the sprites
 function preload(){
-  //loads the sprites
   defaultPacManSprite = loadImage("images/pacman/pacman-default.png"); 
   rightPacManSprite = loadImage("images/pacman/pacman-right.gif"); 
   downPacManSprite = loadImage("images/pacman/pacman-down.gif");
@@ -507,6 +538,8 @@ function preload(){
 
 function setup() {
   high_score = getItem('end_score');
+
+  //this is to just prevent monitors that allow higher framerates to speed up the game
   frameRate(60);
   
   //creates the screen
@@ -528,7 +561,7 @@ function setup() {
   background(0);
 }
 
-//Detect when the window is resized to update certain stuff so it wont look bugged
+//Detect when the window is resized to update certain stuff so the game wont look slightly broken
 function windowResized(){
   createCanvas(windowWidth, windowHeight);
   noSmooth();
@@ -571,7 +604,6 @@ function displayGameScreen(){
     ghost.displayGhost();
   }
 
-
   cellSize = height/gridSize;
   cameraOffsetX = player.x * cellSize - width /2;
   cameraOffsetY = player.y * cellSize - height /2;
@@ -585,9 +617,10 @@ function displayGameScreen(){
   text(`High score: ${high_score}`, width, 20);
 
   checkMazeExpansion();
+
   for (let particle of particlesArray){
-    particle.displayParticle();
     particle.moveParticle();
+    particle.displayParticle();
   }
 }
 
@@ -598,6 +631,7 @@ function displayMainScreen(){
   background(0);
 }
 
+//checks the player for expanding the maze
 function checkMazeExpansion(){
   const threshold = 3;
   if (player.y > maze.rows/2 - threshold){
@@ -630,6 +664,8 @@ function playerGridCollision(x, y) {
     //square(width/2 + cellSize/2 - cellSize/4, height/2 - cellSize/8, cellSize/4);
   }
 }
+
+//detect when the player is on a pellet to eat it
 function playerEatsPellet(x, y){
   if(maze.grid[Math.round(y - 0.5)][Math.round(x - 0.5)] === OPEN_TILE_WITH_PELLET){
     score += 10;
@@ -675,6 +711,7 @@ function mouseWheel(event){
   }
 }
 
+//for when someone is using a touch screen device
 function touchInputs(){
 
   //up
